@@ -1,3 +1,4 @@
+import { Link, useLocation } from "react-router-dom"
 import { Flower, ShieldCheck } from "lucide-react"
 
 import { Eyebrow } from "@/components/common/eyebrow"
@@ -6,6 +7,41 @@ import { Container } from "@/components/layout/container"
 import { legalLinks, quickLinks, siteConfig } from "@/config/site"
 
 function SiteFooter() {
+  const location = useLocation()
+  const isMyHomePage = location.pathname === "/my-home"
+
+  if (isMyHomePage) {
+    return (
+      <footer className="border-t border-[#eee6dc] bg-[#f7f3ed] py-8 text-xs text-muted-foreground">
+        <Container className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="font-heading text-lg font-bold text-primary">
+              RoomieMatch
+            </span>
+            <p>© 2025 RoomieMatch. Mindfully crafted for harmonious co-living.</p>
+          </div>
+          <nav aria-label="Household legal links" className="flex flex-wrap items-center gap-3 text-xs">
+            <Link to="/house-rules" className="transition-colors hover:text-primary">
+              House Rules
+            </Link>
+            <span aria-hidden="true">•</span>
+            <Link to="/safety" className="transition-colors hover:text-primary">
+              Safety & Trust
+            </Link>
+            <span aria-hidden="true">•</span>
+            <Link to="/privacy" className="transition-colors hover:text-primary">
+              Privacy
+            </Link>
+            <span aria-hidden="true">•</span>
+            <Link to="/support" className="transition-colors hover:text-primary">
+              Support
+            </Link>
+          </nav>
+        </Container>
+      </footer>
+    )
+  }
+
   return (
     <footer className="bg-surface shadow-[0_-1px_3px_rgb(92_58_38_/_0.03)]">
       <Container className="flex flex-col gap-12 py-[4.5rem]">

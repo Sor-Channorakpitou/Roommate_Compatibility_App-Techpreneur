@@ -30,7 +30,7 @@ export function BreakdownDialog({
         <div className="relative flex items-center justify-between bg-secondary p-6 pb-5">
           <div className="flex items-center gap-4">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-border font-heading text-2xl font-light text-muted-foreground shadow-xs">
-              {profile.initials}
+              {profile.name.slice(0, 2).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export function BreakdownDialog({
               </div>
               <p className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                 <MapPin className="size-3.5 text-primary" />
-                {profile.area} • {profile.priceDisplay}
+                {profile.location} • {profile.priceDisplay}
               </p>
             </div>
           </div>

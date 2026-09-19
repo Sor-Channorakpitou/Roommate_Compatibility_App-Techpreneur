@@ -24,13 +24,8 @@ type RegisterPayload = {
 type AuthContextValue = {
   user: User | null
   isLoading: boolean
-  login: (
-    email: string,
-    password: string
-  ) => Promise<{ ok: boolean; user?: User; error?: string }>
-  register: (
-    payload: RegisterPayload
-  ) => Promise<{ ok: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<{ ok: boolean; user?: User; error?: string }>
+  register: (payload: RegisterPayload) => Promise<{ ok: boolean; user?: User; error?: string }>
   logout: () => void
 }
 
@@ -97,10 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user])
 
   const login = React.useCallback(
-    async (
-      email: string,
-      password: string
-    ): Promise<{ ok: boolean; user?: User; error?: string }> => {
+    async (email: string, password: string): Promise<{ ok: boolean; user?: User; error?: string }> => {
       setIsLoading(true)
       await fakeDelay()
       const users = getStoredUsers()
@@ -119,9 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const register = React.useCallback(
-    async (
-      payload: RegisterPayload
-    ): Promise<{ ok: boolean; error?: string }> => {
+    async (payload: RegisterPayload): Promise<{ ok: boolean; user?: User; error?: string }> => {
       setIsLoading(true)
       await fakeDelay(1000)
       const users = getStoredUsers()
@@ -146,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { password: _, ...safeUser } = newUser
       setUser(safeUser)
       setIsLoading(false)
-      return { ok: true }
+      return { ok: true, user: safeUser }
     },
     []
   )

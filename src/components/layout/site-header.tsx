@@ -1,15 +1,7 @@
 import * as React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { toast } from "sonner"
-import {
-  ChevronDown,
-  Home,
-  LogOut,
-  Menu,
-  MessageSquare,
-  User,
-  X,
-} from "lucide-react"
+import { Home, LogOut, Menu, MessageSquare, User, X } from "lucide-react"
 import { cn } from "cn"
 
 import { useAuth } from "@/context/auth-context"
@@ -24,16 +16,19 @@ function NavItem({ link }: { link: NavLink }) {
   const location = useLocation()
   const isActive =
     location.pathname === link.href ||
-    (link.href === "/browse" && location.pathname === "/find-roommates")
+    (link.href === "/find-roommates" &&
+      (location.pathname === "/find-roommates" || location.pathname === "/browse")) ||
+    (link.href === "/browse" &&
+      (location.pathname === "/browse" || location.pathname === "/find-roommates"))
 
   return (
     <Link
       to={link.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "rounded-sm px-4 font-semibold transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        "px-2 font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isActive
-          ? "border-b-2 border-primary pt-2 pb-2.5 text-base text-primary"
+          ? "border-b-2 border-[#7a3418] pt-2 pb-1.5 text-base font-semibold text-[#7a3418]"
           : "py-2 text-sm tracking-[0.01em] text-muted-foreground hover:text-primary"
       )}
     >
@@ -105,8 +100,6 @@ function UserMenu({ className }: { className?: string }) {
     return () => document.removeEventListener("keydown", handleKey)
   }, [isOpen])
 
-  if (!user) return null
-
   function handleLogout() {
     logout()
     setIsOpen(false)
@@ -115,6 +108,9 @@ function UserMenu({ className }: { className?: string }) {
     })
   }
 
+  const displayName = user ? user.name : "Sopheak Chan"
+  const displayEmail = user ? user.email : "sopheak.chan@student.edu.kh"
+
   return (
     <div ref={menuRef} className={cn("relative", className)}>
       <button
@@ -122,22 +118,18 @@ function UserMenu({ className }: { className?: string }) {
         onClick={() => setIsOpen((o) => !o)}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        className="flex items-center gap-2 rounded-full py-1 pr-3 pl-1 transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+        aria-label="User profile menu"
+        className="flex size-9 items-center justify-center rounded-full border border-foreground/30 text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <Avatar size="sm">
-          <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
-            {getInitials(user.name)}
-          </AvatarFallback>
-        </Avatar>
-        <span className="max-w-[8rem] truncate text-sm font-semibold text-foreground">
-          {user.name}
-        </span>
-        <ChevronDown
-          className={cn(
-            "size-3.5 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
-        />
+        {user ? (
+          <Avatar size="sm">
+            <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
+              {getInitials(user.name)}
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <User className="size-4 text-foreground/80" />
+        )}
       </button>
 
       <div
@@ -150,44 +142,54 @@ function UserMenu({ className }: { className?: string }) {
         role="menu"
       >
         <div className="px-3 py-2.5">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {user.name}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+          <p className="truncate text-xs text-muted-foreground">{displayEmail}</p>
         </div>
 
         <div className="mx-2 h-px bg-border/60" />
 
         <Link
-          to="/"
+          to="/my-home"
           role="menuitem"
           onClick={() => setIsOpen(false)}
           className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
         >
-          <User className="size-4 text-muted-foreground" />
-          Profile
+          <Home className="size-4 text-muted-foreground" />
+          My Home
         </Link>
         <Link
-          to="/my-home"
+          to="/"
           role="menuitem"
           onClick={() => setIsOpen(false)}
           className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
         >
-          <Home className="size-4 text-muted-foreground" />
-          My Home
+          <User className="size-4 text-muted-foreground" />
+          Profile
         </Link>
 
         <div className="mx-2 my-1 h-px bg-border/60" />
 
-        <button
-          type="button"
-          role="menuitem"
-          onClick={handleLogout}
-          className="mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/8"
-        >
-          <LogOut className="size-4" />
-          Log Out
-        </button>
+        {user ? (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleLogout}
+            className="mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/8"
+          >
+            <LogOut className="size-4" />
+            Log Out
+          </button>
+        ) : (
+          <Link
+            to="/sign-in"
+            role="menuitem"
+            onClick={() => setIsOpen(false)}
+            className="mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-primary transition-colors hover:bg-muted"
+          >
+            <User className="size-4" />
+            Sign In / Register
+          </Link>
+        )}
       </div>
     </div>
   )
@@ -261,8 +263,10 @@ function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-4 lg:flex">
+        <div className="hidden items-center gap-6 lg:flex">
+
           <ActionButtons />
+
           {user ? (
             <UserMenu />
           ) : (
