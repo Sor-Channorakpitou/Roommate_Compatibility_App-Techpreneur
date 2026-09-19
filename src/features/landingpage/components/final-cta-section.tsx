@@ -1,18 +1,12 @@
-import { Lock, ThumbsUp } from "lucide-react"
-
 import { ButtonLink } from "@/components/common/button-link"
 import { Eyebrow } from "@/components/common/eyebrow"
-
-const trustSignals = [
-  { id: "privacy", icon: Lock, label: "Student Privacy First" },
-  { id: "free", icon: ThumbsUp, label: "100% Free for University Students" },
-]
+import { trustSignals } from "@/features/landingpage/data/landing-content"
 
 function FinalCtaSection() {
   return (
     <section
       aria-labelledby="final-cta-heading"
-      className="relative overflow-hidden rounded-xl bg-brand-surface px-6 py-12 text-center shadow-raised sm:px-8"
+      className="relative overflow-hidden rounded-xl bg-brand-surface px-6 py-14 text-center shadow-raised sm:px-8 lg:py-16"
     >
       <div
         aria-hidden

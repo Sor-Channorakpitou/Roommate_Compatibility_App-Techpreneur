@@ -2,13 +2,13 @@ import { cn } from "cn"
 
 import { SectionIntro } from "@/components/common/section-intro"
 import { Card, CardContent } from "@/components/ui/card"
-import { journeySteps } from "@/features/landing/data/landing-content"
+import { journeySteps } from "@/features/landingpage/data/landing-content"
 
 function JourneySection() {
   return (
     <section
       aria-labelledby="journey-heading"
-      className="flex flex-col items-center gap-12 rounded-xl bg-surface-sand p-6 sm:p-8"
+      className="flex flex-col items-center gap-12 rounded-xl bg-surface-sand p-6 sm:p-8 lg:gap-14 lg:p-12"
     >
       <SectionIntro
         eyebrow="How it works"

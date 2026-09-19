@@ -17,7 +17,9 @@ function LoginPage() {
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
   const [error, setError] = React.useState("")
-  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({})
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>(
+    {}
+  )
 
   function validate() {
     const e: Record<string, string> = {}
@@ -53,7 +55,6 @@ function LoginPage() {
     }
   }
 
-
   return (
     <Container className="flex min-h-[calc(100svh-5rem)] items-center justify-center py-12">
       <div className="w-full max-w-[420px]">
@@ -82,7 +83,10 @@ function LoginPage() {
 
           {/* Email */}
           <fieldset className="flex flex-col gap-1.5">
-            <label htmlFor="login-email" className="text-[0.8125rem] font-semibold text-foreground">
+            <label
+              htmlFor="login-email"
+              className="text-[0.8125rem] font-semibold text-foreground"
+            >
               Email Address
             </label>
             <Input
@@ -94,7 +98,9 @@ function LoginPage() {
               aria-invalid={!!fieldErrors.email}
               className="h-10"
             />
-            {fieldErrors.email && <p className="text-xs text-destructive">{fieldErrors.email}</p>}
+            {fieldErrors.email && (
+              <p className="text-xs text-destructive">{fieldErrors.email}</p>
+            )}
           </fieldset>
 
           {/* Password */}
@@ -118,17 +124,20 @@ function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                {showPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
               </button>
             </div>
             {fieldErrors.password && (
               <p className="text-xs text-destructive">{fieldErrors.password}</p>
             )}
           </fieldset>
-
 
           {/* Submit */}
           <Button

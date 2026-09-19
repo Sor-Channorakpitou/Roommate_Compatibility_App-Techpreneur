@@ -1,24 +1,19 @@
 import type * as React from "react"
+import type { VariantProps } from "class-variance-authority"
+import { cn } from "cn"
 
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 
-type ButtonLinkProps = Omit<
-  React.ComponentProps<typeof Button>,
-  "render" | "nativeButton"
-> &
-  Pick<React.ComponentProps<"a">, "href" | "target" | "rel">
+type ButtonLinkProps = React.ComponentProps<"a"> &
+  VariantProps<typeof buttonVariants>
 
-/**
- * A link styled as a button.
- *
- * Base UI warns when a component with button semantics renders a non-`<button>`
- * element, so `nativeButton` is turned off here once instead of at every site.
- */
-function ButtonLink({ href, target, rel, ...props }: ButtonLinkProps) {
+// Borrows the Button's styles but stays a real anchor. Rendering an <a> through
+// the Button primitive stamps role="button" over its link semantics.
+function ButtonLink({ className, variant, size, ...props }: ButtonLinkProps) {
   return (
-    <Button
-      nativeButton={false}
-      render={<a href={href} target={target} rel={rel} />}
+    <a
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
   )

@@ -2,7 +2,7 @@ import { cn } from "cn"
 
 import { SectionIntro } from "@/components/common/section-intro"
 import { Card, CardContent } from "@/components/ui/card"
-import { livingHabits } from "@/features/landing/data/landing-content"
+import { livingHabits } from "@/features/landingpage/data/landing-content"
 
 function LivingHabitsSection() {
   return (

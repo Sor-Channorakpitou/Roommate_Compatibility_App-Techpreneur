@@ -4,9 +4,8 @@ import { cn } from "cn"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { searchFields } from "@/features/landing/data/landing-content"
+import { searchFields } from "@/features/landingpage/data/landing-content"
 
-/** Floating three-field search bar that sits above the hero. */
 function LifestyleSearchBar({ className }: { className?: string }) {
   return (
     <form
@@ -52,7 +51,7 @@ function LifestyleSearchBar({ className }: { className?: string }) {
       <div className="p-1 md:pl-2">
         <Button type="submit" size="pill" className="w-full shadow-card">
           <Search aria-hidden className="size-3" />
-          Search
+          Find Matches
         </Button>
       </div>
     </form>
