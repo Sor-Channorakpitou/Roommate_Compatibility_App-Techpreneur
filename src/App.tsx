@@ -7,6 +7,7 @@ import { LoginPage, RegisterPage } from "@/features/auth"
 import { CompatibilityPage } from "@/features/compatibility"
 import { FindRoommatesPage } from "@/features/find-roommates"
 import { LandingPage } from "@/features/landingpage"
+import { MessagesPage } from "@/features/messages"
 
 export function App() {
   return (
@@ -28,6 +29,7 @@ export function App() {
             <Route path="/sign-in" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/compatibility-test" element={<CompatibilityPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
           </Routes>
         </main>
         <SiteFooter />
