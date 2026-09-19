@@ -24,8 +24,13 @@ type RegisterPayload = {
 type AuthContextValue = {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>
-  register: (payload: RegisterPayload) => Promise<{ ok: boolean; error?: string }>
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ ok: boolean; user?: User; error?: string }>
+  register: (
+    payload: RegisterPayload
+  ) => Promise<{ ok: boolean; error?: string }>
   logout: () => void
 }
 
@@ -92,30 +97,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user])
 
   const login = React.useCallback(
-    async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
+    async (
+      email: string,
+      password: string
+    ): Promise<{ ok: boolean; user?: User; error?: string }> => {
       setIsLoading(true)
       await fakeDelay()
       const users = getStoredUsers()
       const match = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password,
+        (u) =>
+          u.email.toLowerCase() === email.toLowerCase() &&
+          u.password === password
       )
       setIsLoading(false)
       if (!match) return { ok: false, error: "Invalid email or password." }
       const { password: _, ...safeUser } = match
       setUser(safeUser)
-      return { ok: true }
+      return { ok: true, user: safeUser }
     },
-    [],
+    []
   )
 
   const register = React.useCallback(
-    async (payload: RegisterPayload): Promise<{ ok: boolean; error?: string }> => {
+    async (
+      payload: RegisterPayload
+    ): Promise<{ ok: boolean; error?: string }> => {
       setIsLoading(true)
       await fakeDelay(1000)
       const users = getStoredUsers()
-      if (users.some((u) => u.email.toLowerCase() === payload.email.toLowerCase())) {
+      if (
+        users.some((u) => u.email.toLowerCase() === payload.email.toLowerCase())
+      ) {
         setIsLoading(false)
-        return { ok: false, error: "An account with this email already exists." }
+        return {
+          ok: false,
+          error: "An account with this email already exists.",
+        }
       }
       const newUser: StoredUser = {
         id: generateId(),
@@ -131,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
       return { ok: true }
     },
-    [],
+    []
   )
 
   const logout = React.useCallback(() => {
@@ -140,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = React.useMemo(
     () => ({ user, isLoading, login, register, logout }),
-    [user, isLoading, login, register, logout],
+    [user, isLoading, login, register, logout]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

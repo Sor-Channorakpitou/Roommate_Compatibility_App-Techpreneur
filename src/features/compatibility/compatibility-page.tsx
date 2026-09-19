@@ -48,7 +48,8 @@ const QUESTIONS: QuizQuestion[] = [
     questionNumber: 1,
     totalQuestions: 8,
     title: "When do your lights usually go out on weekdays?",
-    subtitle: "Select the schedule that best reflects your natural daily rhythm.",
+    subtitle:
+      "Select the schedule that best reflects your natural daily rhythm.",
     options: [
       {
         id: "early-bird",
@@ -165,14 +166,17 @@ function CompatibilityPage() {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = React.useState(0)
   const [selections, setSelections] = React.useState<Record<number, string>>({})
-  const [subSelections, setSubSelections] = React.useState<Record<number, string>>({})
+  const [subSelections, setSubSelections] = React.useState<
+    Record<number, string>
+  >({})
 
   const question = QUESTIONS[currentIndex]
   const selectedOption = selections[currentIndex] ?? ""
   const selectedSub = subSelections[currentIndex] ?? ""
 
   // User must select both main option and sub-option if sub-group exists
-  const isStepComplete = Boolean(selectedOption) && (!question.subGroup || Boolean(selectedSub))
+  const isStepComplete =
+    Boolean(selectedOption) && (!question.subGroup || Boolean(selectedSub))
   const isLastStep = currentIndex === QUESTIONS.length - 1
 
   function handleSelect(optionId: string) {
@@ -188,7 +192,8 @@ function CompatibilityPage() {
 
     if (isLastStep) {
       toast.success("Compatibility test completed!", {
-        description: "Your preferences have been saved. Directing to home page...",
+        description:
+          "Your preferences have been saved. Directing to home page...",
       })
       navigate("/")
     } else {
@@ -239,7 +244,7 @@ function CompatibilityPage() {
                 onClick={() => handleSelect(opt.id)}
                 className={`group flex w-full items-center gap-4 rounded-xl border px-5 py-4 text-left transition-all ${
                   isSelected
-                    ? "border-primary bg-card ring-1 ring-primary/30 shadow-card"
+                    ? "border-primary bg-card shadow-card ring-1 ring-primary/30"
                     : "border-border bg-card hover:border-primary/30 hover:shadow-card"
                 }`}
               >
@@ -257,9 +262,13 @@ function CompatibilityPage() {
                 {/* Text */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[0.9375rem] font-bold text-foreground">{opt.label}</span>
+                    <span className="text-[0.9375rem] font-bold text-foreground">
+                      {opt.label}
+                    </span>
                     {opt.time && (
-                      <span className="text-xs font-medium text-muted-foreground">{opt.time}</span>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {opt.time}
+                      </span>
                     )}
                   </div>
                   <p className="mt-0.5 text-[0.8125rem] leading-[1.5] text-muted-foreground">
@@ -270,13 +279,14 @@ function CompatibilityPage() {
                 {/* Radio indicator */}
                 <span
                   className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                    isSelected
-                      ? "border-primary bg-primary"
-                      : "border-border"
+                    isSelected ? "border-primary bg-primary" : "border-border"
                   }`}
                 >
                   {isSelected && (
-                    <svg viewBox="0 0 12 12" className="size-3 text-primary-foreground">
+                    <svg
+                      viewBox="0 0 12 12"
+                      className="size-3 text-primary-foreground"
+                    >
                       <path
                         d="M10 3L4.5 8.5L2 6"
                         fill="none"
@@ -299,10 +309,14 @@ function CompatibilityPage() {
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-bold text-foreground">
                 {question.subGroup.label}{" "}
-                <span className="text-xs font-normal text-destructive">*Required</span>
+                <span className="text-xs font-normal text-destructive">
+                  *Required
+                </span>
               </p>
               {question.subGroup.labelRight && (
-                <p className="text-sm text-muted-foreground">{question.subGroup.labelRight}</p>
+                <p className="text-sm text-muted-foreground">
+                  {question.subGroup.labelRight}
+                </p>
               )}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -315,7 +329,7 @@ function CompatibilityPage() {
                     onClick={() => handleSubSelect(sub.id)}
                     className={`rounded-full border px-4 py-2 text-[0.8125rem] font-medium transition-all ${
                       isActive
-                        ? "border-primary bg-primary/12 text-primary font-semibold ring-1 ring-primary/30"
+                        ? "border-primary bg-primary/12 font-semibold text-primary ring-1 ring-primary/30"
                         : "border-border bg-card text-muted-foreground hover:border-primary/40"
                     }`}
                   >
@@ -333,8 +347,8 @@ function CompatibilityPage() {
             {!selectedOption && question.subGroup && !selectedSub
               ? "Please select a main option and a weekend preference to continue."
               : !selectedOption
-              ? "Please select an option to continue."
-              : "Please select a weekend preference to continue."}
+                ? "Please select an option to continue."
+                : "Please select a weekend preference to continue."}
           </p>
         )}
 
@@ -366,4 +380,3 @@ function CompatibilityPage() {
 }
 
 export { CompatibilityPage }
-
