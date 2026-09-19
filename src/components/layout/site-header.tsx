@@ -8,7 +8,7 @@ import { Container } from "@/components/layout/container"
 import { Button } from "@/components/ui/button"
 import { mainNav, type NavLink } from "@/config/site"
 
-/** The landing page is the site root, so "Home" is the current page. */
+// This page is the site root, so "Home" is the current nav item.
 const CURRENT_PATH = "/"
 
 function NavItem({ link }: { link: NavLink }) {

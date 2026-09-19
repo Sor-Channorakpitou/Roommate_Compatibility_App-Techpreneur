@@ -47,20 +47,32 @@ src/
 ## Design tokens
 
 The palette, typography, and elevation scale in `src/index.css` are ported from the
-[Figma file](https://www.figma.com/design/IyU8yu2NyM0eT0By4cfZAE/Untitled?node-id=1-2),
+[Figma file](https://www.figma.com/design/IyU8yu2NyM0eT0By4cfZAE/Untitled?node-id=5-2) (frame `Homepage`),
 with source hex values kept in comments beside their `oklch()` equivalents.
 
-Two groups of tokens:
+Fonts: Gabarito (`font-heading`) and Inter (`font-sans`), self-hosted via Fontsource.
 
-- **Theme-aware** (`--background`, `--primary`, `--surface`, `--peach`, `--sage`, …)
-  invert between light and dark.
-- **Brand constants** (`--brand`, `--brand-surface*`) stay the same in both themes,
-  because the CTA banner is always the deep terracotta slab from the design.
+Gabarito ships **no italic face**, so emphasis in headings uses weight and colour
+(`font-semibold text-primary`) rather than `italic` — a faux-oblique Gabarito looks
+broken. Swapping typefaces means editing the two `@import` lines and the two
+`--font-*` tokens in `src/index.css`; no component references a font by name.
 
-Fonts: Newsreader (`font-heading`) and Plus Jakarta Sans (`font-sans`), self-hosted
-via Fontsource.
+### Light-only interface
 
-Dark mode is handled by `ThemeProvider`; press <kbd>d</kbd> to toggle.
+The UI is always light and deliberately ignores the OS colour scheme. Three things
+enforce that, and all three matter:
+
+1. There is a single `:root` token set and no `.dark` block.
+2. `@custom-variant dark (&:is(.dark *))` rebinds `dark:` away from the browser's
+   `prefers-color-scheme` default onto a `.dark` class nothing ever adds — without
+   it, the `dark:` utilities still shipped inside the shadcn registry components
+   would fire on a dark-mode machine.
+3. `color-scheme: light` (plus the matching `<meta>` in `index.html`) keeps native
+   UI — form controls, scrollbars — light too.
+
+To reintroduce dark mode later: restore a `.dark` token block, drop the `color-scheme`
+declaration and the meta tag, and add something that toggles the `.dark` class on
+`<html>`.
 
 ## Adding components
 

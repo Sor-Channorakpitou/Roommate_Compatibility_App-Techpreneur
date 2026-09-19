@@ -10,7 +10,6 @@ type SectionIntroProps = {
   className?: string
 }
 
-/** Centered kicker + heading + supporting copy used by every content section. */
 function SectionIntro({
   eyebrow,
   title,

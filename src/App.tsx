@@ -1,6 +1,6 @@
 import { SiteFooter } from "@/components/layout/site-footer"
 import { SiteHeader } from "@/components/layout/site-header"
-import { LandingPage } from "@/features/landing"
+import { LandingPage } from "@/features/landingpage"
 
 export function App() {
   return (

@@ -9,10 +9,6 @@ type BrandProps = {
   wordmarkClassName?: string
 }
 
-/**
- * Logo lockup. The mark is decorative because the wordmark next to it already
- * carries the accessible name of the link.
- */
 function Brand({ className, markClassName, wordmarkClassName }: BrandProps) {
   return (
     <a

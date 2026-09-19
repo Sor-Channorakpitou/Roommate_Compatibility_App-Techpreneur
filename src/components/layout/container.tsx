@@ -1,7 +1,7 @@
 import type * as React from "react"
 import { cn } from "cn"
 
-/** Shared page gutter: 1240px max width, matching the Figma layout grid. */
+// 1240px max width, matching the Figma layout grid.
 function Container({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
