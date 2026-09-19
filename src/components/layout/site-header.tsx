@@ -1,22 +1,26 @@
 import * as React from "react"
-import { Menu, MessageSquare, X } from "lucide-react"
+import { Link, useLocation } from "react-router-dom"
+import { toast } from "sonner"
+import { ChevronDown, Home, LogOut, Menu, MessageSquare, User, X } from "lucide-react"
 import { cn } from "cn"
 
+import { useAuth } from "@/context/auth-context"
 import { ButtonLink } from "@/components/common/button-link"
 import { Brand } from "@/components/layout/brand"
 import { Container } from "@/components/layout/container"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { mainNav, type NavLink } from "@/config/site"
 
-// This page is the site root, so "Home" is the current nav item.
-const CURRENT_PATH = "/"
-
 function NavItem({ link }: { link: NavLink }) {
-  const isActive = link.href === CURRENT_PATH
+  const location = useLocation()
+  const isActive =
+    location.pathname === link.href ||
+    (link.href === "/browse" && location.pathname === "/find-roommates")
 
   return (
-    <a
-      href={link.href}
+    <Link
+      to={link.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "rounded-sm px-4 font-semibold transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -26,13 +30,13 @@ function NavItem({ link }: { link: NavLink }) {
       )}
     >
       {link.label}
-    </a>
+    </Link>
   )
 }
 
-function HeaderActions({ className }: { className?: string }) {
+function ActionButtons() {
   return (
-    <div className={cn("flex items-center gap-4", className)}>
+    <>
       <ButtonLink
         href="/messages"
         variant="ghost"
@@ -52,20 +56,185 @@ function HeaderActions({ className }: { className?: string }) {
       >
         Create Room
       </ButtonLink>
-      <ButtonLink
-        href="/sign-in"
-        variant="ghost"
-        size="pill-xs"
-        className="text-foreground"
+    </>
+  )
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
+}
+
+function UserMenu({ className }: { className?: string }) {
+  const { user, logout } = useAuth()
+  const [isOpen, setIsOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    if (!isOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [isOpen])
+
+  React.useEffect(() => {
+    if (!isOpen) return
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setIsOpen(false)
+    }
+    document.addEventListener("keydown", handleKey)
+    return () => document.removeEventListener("keydown", handleKey)
+  }, [isOpen])
+
+  if (!user) return null
+
+  function handleLogout() {
+    logout()
+    setIsOpen(false)
+    toast.success("Signed out successfully", {
+      description: "See you next time!",
+    })
+  }
+
+  return (
+    <div ref={menuRef} className={cn("relative", className)}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((o) => !o)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        Sign In
-      </ButtonLink>
+        <Avatar size="sm">
+          <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
+            {getInitials(user.name)}
+          </AvatarFallback>
+        </Avatar>
+        <span className="max-w-[8rem] truncate text-sm font-semibold text-foreground">
+          {user.name}
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-3.5 text-muted-foreground transition-transform duration-200",
+            isOpen && "rotate-180"
+          )}
+        />
+      </button>
+
+      <div
+        className={cn(
+          "absolute right-0 top-full z-50 mt-2 w-52 origin-top-right rounded-xl bg-card p-1.5 shadow-floating ring-1 ring-foreground/10 transition-all duration-200 ease-out",
+          isOpen
+            ? "scale-100 opacity-100 visible"
+            : "pointer-events-none scale-95 opacity-0 invisible"
+        )}
+        role="menu"
+      >
+        <div className="px-3 py-2.5">
+          <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+        </div>
+
+        <div className="mx-2 h-px bg-border/60" />
+
+        <Link
+          to="/"
+          role="menuitem"
+          onClick={() => setIsOpen(false)}
+          className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          <User className="size-4 text-muted-foreground" />
+          Profile
+        </Link>
+        <Link
+          to="/my-home"
+          role="menuitem"
+          onClick={() => setIsOpen(false)}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          <Home className="size-4 text-muted-foreground" />
+          My Home
+        </Link>
+
+        <div className="mx-2 my-1 h-px bg-border/60" />
+
+        <button
+          type="button"
+          role="menuitem"
+          onClick={handleLogout}
+          className="mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/8"
+        >
+          <LogOut className="size-4" />
+          Log Out
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function MobileUserSection() {
+  const { user, logout } = useAuth()
+
+  if (!user) return null
+
+  function handleLogout() {
+    logout()
+    toast.success("Signed out successfully", {
+      description: "See you next time!",
+    })
+  }
+
+  return (
+    <div className="flex flex-col gap-1 border-t border-border/40 pt-3">
+      <div className="flex items-center gap-3 px-2 py-2">
+        <Avatar size="sm">
+          <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
+            {getInitials(user.name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+        </div>
+      </div>
+      <Link
+        to="/"
+        className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-foreground hover:bg-muted"
+      >
+        <User className="size-4 text-muted-foreground" />
+        Profile
+      </Link>
+      <Link
+        to="/my-home"
+        className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-foreground hover:bg-muted"
+      >
+        <Home className="size-4 text-muted-foreground" />
+        My Home
+      </Link>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-destructive hover:bg-destructive/8"
+      >
+        <LogOut className="size-4" />
+        Log Out
+      </button>
     </div>
   )
 }
 
 function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const { user } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/95 shadow-header backdrop-blur-md">
@@ -78,7 +247,21 @@ function SiteHeader() {
           ))}
         </nav>
 
-        <HeaderActions className="hidden lg:flex" />
+        <div className="hidden items-center gap-4 lg:flex">
+          <ActionButtons />
+          {user ? (
+            <UserMenu />
+          ) : (
+            <ButtonLink
+              href="/sign-in"
+              variant="ghost"
+              size="pill-xs"
+              className="text-foreground"
+            >
+              Sign In
+            </ButtonLink>
+          )}
+        </div>
 
         <Button
           variant="ghost"
@@ -104,7 +287,20 @@ function SiteHeader() {
                 <NavItem key={link.href} link={link} />
               ))}
             </nav>
-            <HeaderActions className="flex-wrap" />
+            <div className="flex flex-wrap items-center gap-3">
+              <ActionButtons />
+              {!user && (
+                <ButtonLink
+                  href="/sign-in"
+                  variant="ghost"
+                  size="pill-xs"
+                  className="text-foreground"
+                >
+                  Sign In
+                </ButtonLink>
+              )}
+            </div>
+            {user && <MobileUserSection />}
           </Container>
         </div>
       ) : null}

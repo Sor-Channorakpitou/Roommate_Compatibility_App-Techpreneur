@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/gabarito";
+@import "@fontsource-variable/roboto-slab";
 
 /* Light-only: rebinds `dark:` onto a `.dark` class nothing ever adds, so the
    registry components' `dark:` utilities never fire. Do not remove. */
@@ -68,6 +69,8 @@
     --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
     /* Gabarito ships no italic — emphasise with weight and colour, not `italic`. */
     --font-heading: "Gabarito Variable", ui-sans-serif, system-ui, sans-serif;
+    /* Used by the find-roommates feature. */
+    --font-roboto-slab: "Roboto Slab Variable", "Roboto Slab", serif;
 
     --color-brand: var(--brand);
     --color-brand-foreground: var(--brand-foreground);

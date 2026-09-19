@@ -7,12 +7,18 @@ type BrandProps = {
   className?: string
   markClassName?: string
   wordmarkClassName?: string
+  onClick?: (e: React.MouseEvent) => void
 }
 
-function Brand({ className, markClassName, wordmarkClassName }: BrandProps) {
+/**
+ * Logo lockup. The mark is decorative because the wordmark next to it already
+ * carries the accessible name of the link.
+ */
+function Brand({ className, markClassName, wordmarkClassName, onClick }: BrandProps) {
   return (
     <a
       href="/"
+      onClick={onClick}
       className={cn(
         "flex items-center gap-3 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
         className
