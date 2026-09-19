@@ -1,7 +1,15 @@
 import * as React from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { toast } from "sonner"
-import { ArrowRight, Check, ChevronDown, Eye, EyeOff, Loader2, UserPlus } from "lucide-react"
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Loader2,
+  UserPlus,
+} from "lucide-react"
 
 import { useAuth } from "@/context/auth-context"
 import { Eyebrow } from "@/components/common/eyebrow"
@@ -14,12 +22,28 @@ import { Input } from "@/components/ui/input"
 // ---------------------------------------------------------------------------
 
 const UNIVERSITIES = [
-  { value: "CADT", label: "CADT", fullName: "Cambodia Academy of Digital Technology" },
+  {
+    value: "CADT",
+    label: "CADT",
+    fullName: "Cambodia Academy of Digital Technology",
+  },
   { value: "RUPP", label: "RUPP", fullName: "Royal University of Phnom Penh" },
-  { value: "ITC", label: "ITC", fullName: "Institute of Technology of Cambodia" },
-  { value: "RULE", label: "RULE", fullName: "Royal University of Law and Economics" },
+  {
+    value: "ITC",
+    label: "ITC",
+    fullName: "Institute of Technology of Cambodia",
+  },
+  {
+    value: "RULE",
+    label: "RULE",
+    fullName: "Royal University of Law and Economics",
+  },
   { value: "NUM", label: "NUM", fullName: "National University of Management" },
-  { value: "Other", label: "Other", fullName: "Other University / Institution" },
+  {
+    value: "Other",
+    label: "Other",
+    fullName: "Other University / Institution",
+  },
 ] as const
 
 const GENDERS = ["Male", "Female", "Other"] as const
@@ -44,7 +68,10 @@ function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false)
       }
     }
@@ -70,19 +97,29 @@ function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex h-10 w-full items-center justify-between rounded-lg border bg-card px-3 py-2 text-sm transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${error
+        className={`flex h-10 w-full items-center justify-between rounded-lg border bg-card px-3 py-2 text-sm transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${
+          error
             ? "border-destructive ring-1 ring-destructive/30"
             : isOpen
-              ? "border-primary ring-2 ring-primary/20 shadow-sm"
+              ? "border-primary shadow-sm ring-2 ring-primary/20"
               : "border-input hover:border-primary/40"
-          }`}
+        }`}
       >
-        <span className={selectedUni ? "font-medium text-foreground" : "text-muted-foreground"}>
-          {selectedUni ? `${selectedUni.label} (${selectedUni.fullName})` : "Select your university"}
+        <span
+          className={
+            selectedUni
+              ? "font-medium text-foreground"
+              : "text-muted-foreground"
+          }
+        >
+          {selectedUni
+            ? `${selectedUni.label} (${selectedUni.fullName})`
+            : "Select your university"}
         </span>
         <ChevronDown
-          className={`size-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180 text-primary" : ""
-            }`}
+          className={`size-4 text-muted-foreground transition-transform duration-200 ${
+            isOpen ? "rotate-180 text-primary" : ""
+          }`}
         />
       </button>
 
@@ -90,7 +127,7 @@ function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
         <div
           role="listbox"
           aria-label="University selection"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-border bg-card p-1.5 shadow-floating backdrop-blur-md transition-all duration-150 animate-in fade-in-0 zoom-in-95"
+          className="absolute z-50 mt-1 max-h-60 w-full animate-in overflow-auto rounded-xl border border-border bg-card p-1.5 shadow-floating backdrop-blur-md transition-all duration-150 fade-in-0 zoom-in-95"
         >
           {UNIVERSITIES.map((u) => {
             const isSelected = value === u.value
@@ -104,16 +141,21 @@ function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
                   onChange(u.value)
                   setIsOpen(false)
                 }}
-                className={`group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${isSelected
+                className={`group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  isSelected
                     ? "bg-primary/12 font-semibold text-primary"
                     : "text-foreground hover:bg-muted/80"
-                  }`}
+                }`}
               >
-                <div className="flex flex-col min-w-0 pr-2">
-                  <span className="font-semibold leading-snug">{u.label}</span>
-                  <span className="text-[0.75rem] text-muted-foreground truncate">{u.fullName}</span>
+                <div className="flex min-w-0 flex-col pr-2">
+                  <span className="leading-snug font-semibold">{u.label}</span>
+                  <span className="truncate text-[0.75rem] text-muted-foreground">
+                    {u.fullName}
+                  </span>
                 </div>
-                {isSelected && <Check className="size-4 text-primary shrink-0" />}
+                {isSelected && (
+                  <Check className="size-4 shrink-0 text-primary" />
+                )}
               </button>
             )
           })}
@@ -147,10 +189,12 @@ function RegisterPage() {
     const e: FormErrors = {}
     if (!name.trim()) e.name = "Full name is required."
     if (!email.trim()) e.email = "Email is required."
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Enter a valid email."
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      e.email = "Enter a valid email."
     if (!password) e.password = "Password is required."
     else if (password.length < 6) e.password = "Must be at least 6 characters."
-    if (password !== confirmPassword) e.confirmPassword = "Passwords do not match."
+    if (password !== confirmPassword)
+      e.confirmPassword = "Passwords do not match."
     if (!university) e.university = "Select your university."
     if (university === "Other" && !customUniversity.trim()) {
       e.customUniversity = "Please enter your university name."
@@ -171,12 +215,20 @@ function RegisterPage() {
       return
     }
 
-    const finalUniversity = university === "Other" ? customUniversity.trim() : university
+    const finalUniversity =
+      university === "Other" ? customUniversity.trim() : university
 
-    const result = await register({ name, email, password, university: finalUniversity, gender })
+    const result = await register({
+      name,
+      email,
+      password,
+      university: finalUniversity,
+      gender,
+    })
     if (result.ok) {
       toast.success(`Welcome to RoomieMatch, ${name}!`, {
-        description: "Your account is created. Let's start your compatibility quiz!",
+        description:
+          "Your account is created. Let's start your compatibility quiz!",
       })
       navigate("/compatibility-test")
     } else {
@@ -216,7 +268,10 @@ function RegisterPage() {
 
           {/* Full Name */}
           <fieldset className="flex flex-col gap-1.5">
-            <label htmlFor="reg-name" className="text-[0.8125rem] font-semibold text-foreground">
+            <label
+              htmlFor="reg-name"
+              className="text-[0.8125rem] font-semibold text-foreground"
+            >
               Full Name
             </label>
             <Input
@@ -227,12 +282,17 @@ function RegisterPage() {
               aria-invalid={!!errors.name}
               className="h-10"
             />
-            {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-xs text-destructive">{errors.name}</p>
+            )}
           </fieldset>
 
           {/* Email */}
           <fieldset className="flex flex-col gap-1.5">
-            <label htmlFor="reg-email" className="text-[0.8125rem] font-semibold text-foreground">
+            <label
+              htmlFor="reg-email"
+              className="text-[0.8125rem] font-semibold text-foreground"
+            >
               Email Address
             </label>
             <Input
@@ -244,7 +304,9 @@ function RegisterPage() {
               aria-invalid={!!errors.email}
               className="h-10"
             />
-            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email}</p>
+            )}
           </fieldset>
 
           {/* Password row */}
@@ -269,13 +331,19 @@ function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password}</p>
+              )}
             </fieldset>
 
             <fieldset className="flex flex-col gap-1.5">
@@ -298,14 +366,24 @@ function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
                 >
-                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-xs text-destructive">{errors.confirmPassword}</p>
+                <p className="text-xs text-destructive">
+                  {errors.confirmPassword}
+                </p>
               )}
             </fieldset>
           </div>
@@ -326,11 +404,13 @@ function RegisterPage() {
               }}
               error={errors.university}
             />
-            {errors.university && <p className="text-xs text-destructive">{errors.university}</p>}
+            {errors.university && (
+              <p className="text-xs text-destructive">{errors.university}</p>
+            )}
 
             {/* If Other is chosen, show extra input field */}
             {university === "Other" && (
-              <div className="mt-2 flex flex-col gap-1.5 animate-in fade-in-0 duration-200">
+              <div className="mt-2 flex animate-in flex-col gap-1.5 duration-200 fade-in-0">
                 <label
                   htmlFor="reg-custom-uni"
                   className="text-[0.8125rem] font-semibold text-foreground"
@@ -346,7 +426,9 @@ function RegisterPage() {
                   className="h-10"
                 />
                 {errors.customUniversity && (
-                  <p className="text-xs text-destructive">{errors.customUniversity}</p>
+                  <p className="text-xs text-destructive">
+                    {errors.customUniversity}
+                  </p>
                 )}
               </div>
             )}
@@ -354,15 +436,18 @@ function RegisterPage() {
 
           {/* Gender */}
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-[0.8125rem] font-semibold text-foreground">Gender</legend>
+            <legend className="text-[0.8125rem] font-semibold text-foreground">
+              Gender
+            </legend>
             <div className="flex flex-wrap gap-3">
               {GENDERS.map((g) => (
                 <label
                   key={g}
-                  className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[0.8125rem] font-medium transition-all ${gender === g
+                  className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[0.8125rem] font-medium transition-all ${
+                    gender === g
                       ? "border-primary bg-primary/8 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/40"
-                    }`}
+                  }`}
                 >
                   <input
                     type="radio"
@@ -376,7 +461,9 @@ function RegisterPage() {
                 </label>
               ))}
             </div>
-            {errors.gender && <p className="text-xs text-destructive">{errors.gender}</p>}
+            {errors.gender && (
+              <p className="text-xs text-destructive">{errors.gender}</p>
+            )}
           </fieldset>
 
           {/* Submit */}
@@ -417,4 +504,3 @@ function RegisterPage() {
 }
 
 export { RegisterPage }
-

@@ -71,10 +71,26 @@ export const ROOMMATES_DATA: RoommateProfile[] = [
     bio: "Senior UI/UX designer working in Daun Penh. Early riser who enjoys quiet morning coffee and keeping common areas spotless.",
     occupation: "UI/UX Designer",
     breakdown: [
-      { category: "Sleep & Wake Rhythm", score: 95, detail: "10:30 PM - 6:30 AM schedule alignment" },
-      { category: "Cleanliness & Chores", score: 92, detail: "Immediate dish cleaning & shared chore roster" },
-      { category: "Visitor Policy", score: 88, detail: "Weekend guests welcome with 24h notice" },
-      { category: "Quiet Focus Hours", score: 90, detail: "Quiet study window from 9:30 PM" },
+      {
+        category: "Sleep & Wake Rhythm",
+        score: 95,
+        detail: "10:30 PM - 6:30 AM schedule alignment",
+      },
+      {
+        category: "Cleanliness & Chores",
+        score: 92,
+        detail: "Immediate dish cleaning & shared chore roster",
+      },
+      {
+        category: "Visitor Policy",
+        score: 88,
+        detail: "Weekend guests welcome with 24h notice",
+      },
+      {
+        category: "Quiet Focus Hours",
+        score: 90,
+        detail: "Quiet study window from 9:30 PM",
+      },
     ],
   },
   {
@@ -94,10 +110,26 @@ export const ROOMMATES_DATA: RoommateProfile[] = [
     bio: "Software developer working remotely from BKK1. Value clear communication and organized living spaces.",
     occupation: "Software Engineer",
     breakdown: [
-      { category: "Sleep & Wake Rhythm", score: 90, detail: "11:00 PM - 7:00 AM regular schedule" },
-      { category: "Cleanliness & Chores", score: 85, detail: "Clean kitchen policy & organized workspace" },
-      { category: "Visitor Policy", score: 86, detail: "Low visitor footprint during work hours" },
-      { category: "Quiet Focus Hours", score: 88, detail: "Work-from-home focus time during daytime" },
+      {
+        category: "Sleep & Wake Rhythm",
+        score: 90,
+        detail: "11:00 PM - 7:00 AM regular schedule",
+      },
+      {
+        category: "Cleanliness & Chores",
+        score: 85,
+        detail: "Clean kitchen policy & organized workspace",
+      },
+      {
+        category: "Visitor Policy",
+        score: 86,
+        detail: "Low visitor footprint during work hours",
+      },
+      {
+        category: "Quiet Focus Hours",
+        score: 88,
+        detail: "Work-from-home focus time during daytime",
+      },
     ],
   },
   {
@@ -117,10 +149,26 @@ export const ROOMMATES_DATA: RoommateProfile[] = [
     bio: "Already signed a 2-bedroom apartment in BKK2 with balcony and pool. Looking for a respectful roommate to share the sanctuary.",
     occupation: "Marketing Lead",
     breakdown: [
-      { category: "Sleep & Wake Rhythm", score: 80, detail: "11:30 PM - 7:30 AM cadence" },
-      { category: "Cleanliness & Chores", score: 76, detail: "Weekly maid service included in rent" },
-      { category: "Visitor Policy", score: 80, detail: "Occasional dinner gatherings on weekends" },
-      { category: "Quiet Focus Hours", score: 75, detail: "Flexible study and relaxation spaces" },
+      {
+        category: "Sleep & Wake Rhythm",
+        score: 80,
+        detail: "11:30 PM - 7:30 AM cadence",
+      },
+      {
+        category: "Cleanliness & Chores",
+        score: 76,
+        detail: "Weekly maid service included in rent",
+      },
+      {
+        category: "Visitor Policy",
+        score: 80,
+        detail: "Occasional dinner gatherings on weekends",
+      },
+      {
+        category: "Quiet Focus Hours",
+        score: 75,
+        detail: "Flexible study and relaxation spaces",
+      },
     ],
   },
   {
@@ -140,10 +188,26 @@ export const ROOMMATES_DATA: RoommateProfile[] = [
     bio: "Architecture master's student near Russian Market. Quiet, respectful of boundaries, and studious.",
     occupation: "Architecture Student",
     breakdown: [
-      { category: "Sleep & Wake Rhythm", score: 72, detail: "1:00 AM - 8:30 AM night owl schedule" },
-      { category: "Cleanliness & Chores", score: 75, detail: "Tidy personal studio space" },
-      { category: "Visitor Policy", score: 78, detail: "Rare visitors, values personal space" },
-      { category: "Quiet Focus Hours", score: 68, detail: "Late night drafting & laptop sessions" },
+      {
+        category: "Sleep & Wake Rhythm",
+        score: 72,
+        detail: "1:00 AM - 8:30 AM night owl schedule",
+      },
+      {
+        category: "Cleanliness & Chores",
+        score: 75,
+        detail: "Tidy personal studio space",
+      },
+      {
+        category: "Visitor Policy",
+        score: 78,
+        detail: "Rare visitors, values personal space",
+      },
+      {
+        category: "Quiet Focus Hours",
+        score: 68,
+        detail: "Late night drafting & laptop sessions",
+      },
     ],
   },
   {
@@ -163,10 +227,26 @@ export const ROOMMATES_DATA: RoommateProfile[] = [
     bio: "Accountant seeking a very quiet, serene apartment near Russian Market. Extremely clean and organized.",
     occupation: "Accountant",
     breakdown: [
-      { category: "Sleep & Wake Rhythm", score: 70, detail: "10:00 PM - 6:00 AM strict sleep window" },
-      { category: "Cleanliness & Chores", score: 95, detail: "Impeccable cleanliness standards" },
-      { category: "Visitor Policy", score: 45, detail: "Prefers no outside guests" },
-      { category: "Quiet Focus Hours", score: 90, detail: "Silent environment after 9:30 PM" },
+      {
+        category: "Sleep & Wake Rhythm",
+        score: 70,
+        detail: "10:00 PM - 6:00 AM strict sleep window",
+      },
+      {
+        category: "Cleanliness & Chores",
+        score: 95,
+        detail: "Impeccable cleanliness standards",
+      },
+      {
+        category: "Visitor Policy",
+        score: 45,
+        detail: "Prefers no outside guests",
+      },
+      {
+        category: "Quiet Focus Hours",
+        score: 90,
+        detail: "Silent environment after 9:30 PM",
+      },
     ],
   },
   {
@@ -186,10 +266,26 @@ export const ROOMMATES_DATA: RoommateProfile[] = [
     bio: "Final year student at RUPP. Easy-going, friendly, looking for affordable housing near Toul Kork.",
     occupation: "Media Student",
     breakdown: [
-      { category: "Sleep & Wake Rhythm", score: 60, detail: "Flexible sleeping routine" },
-      { category: "Cleanliness & Chores", score: 62, detail: "Casual weekly cleaning" },
-      { category: "Visitor Policy", score: 65, detail: "Social atmosphere with friends" },
-      { category: "Quiet Focus Hours", score: 50, detail: "Flexible focus times" },
+      {
+        category: "Sleep & Wake Rhythm",
+        score: 60,
+        detail: "Flexible sleeping routine",
+      },
+      {
+        category: "Cleanliness & Chores",
+        score: 62,
+        detail: "Casual weekly cleaning",
+      },
+      {
+        category: "Visitor Policy",
+        score: 65,
+        detail: "Social atmosphere with friends",
+      },
+      {
+        category: "Quiet Focus Hours",
+        score: 50,
+        detail: "Flexible focus times",
+      },
     ],
   },
 ]

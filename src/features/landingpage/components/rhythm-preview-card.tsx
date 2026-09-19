@@ -5,17 +5,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import type { FeaturedMatch } from "@/features/landing/data/landing-content"
+import type { FeaturedMatch } from "@/features/landingpage/data/landing-content"
+import { getInitials } from "@/lib/utils"
 
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-}
-
-/** Hero-side preview of a single match — room photo, rhythm score, and member. */
 function RhythmPreviewCard({ match }: { match: FeaturedMatch }) {
   return (
     <Card className="rounded-xl shadow-raised ring-0 [--card-spacing:--spacing(6)]">

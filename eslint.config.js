@@ -27,4 +27,21 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      // A leading underscore marks a binding that is deliberately discarded,
+      // e.g. `const { password: _, ...safeUser } = user`.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
 ])

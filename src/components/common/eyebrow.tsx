@@ -1,12 +1,6 @@
 import type * as React from "react"
 import { cn } from "cn"
 
-/**
- * Small uppercase kicker that sits above a section heading.
- *
- * `tracking` mirrors the two values used in the design: the default 0.05em for
- * section kickers, and 0.08em for the tighter badge-style labels.
- */
 function Eyebrow({
   className,
   tracking = "wide",
