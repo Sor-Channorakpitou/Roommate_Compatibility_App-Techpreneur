@@ -41,28 +41,31 @@ function NavItem({ link }: { link: NavLink }) {
 function ActionButtons() {
   return (
     <>
-      <ButtonLink
-        href="/messages"
+      <Button
+        nativeButton={false}
         variant="ghost"
         size="pill-xs"
         className="bg-muted text-foreground hover:bg-muted/70"
+        render={<Link to="/messages" />}
       >
         <MessageSquare />
         Messages
         <span aria-hidden className="ml-0.5 size-2 rounded-full bg-primary" />
         <span className="sr-only">(unread messages)</span>
-      </ButtonLink>
-      <ButtonLink
-        href="/rooms/new"
+      </Button>
+      <Button
+        nativeButton={false}
         variant="brand-outline"
         size="pill-xs"
         className="px-[1.0625rem]"
+        render={<Link to="/rooms/new" />}
       >
         Create Room
-      </ButtonLink>
+      </Button>
     </>
   )
 }
+
 
 // ---------------------------------------------------------------------------
 // Signed-in user dropdown
@@ -273,14 +276,15 @@ function SiteHeader() {
           {user ? (
             <UserMenu />
           ) : (
-            <ButtonLink
-              href="/sign-in"
+            <Button
+              nativeButton={false}
               variant="ghost"
               size="pill-xs"
               className="text-foreground"
+              render={<Link to="/sign-in" />}
             >
               Sign In
-            </ButtonLink>
+            </Button>
           )}
         </div>
 

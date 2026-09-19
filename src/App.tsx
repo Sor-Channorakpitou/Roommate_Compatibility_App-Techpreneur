@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { LoginPage, RegisterPage } from "@/features/auth"
 import { CompatibilityPage } from "@/features/compatibility"
 import { LandingPage } from "@/features/landing"
+import { MessagesPage } from "@/features/messages"
 
 export function App() {
   return (
@@ -25,6 +26,7 @@ export function App() {
             <Route path="/sign-in" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/compatibility-test" element={<CompatibilityPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
           </Routes>
         </main>
         <SiteFooter />
@@ -32,6 +34,7 @@ export function App() {
     </BrowserRouter>
   )
 }
+
 
 export default App
 
