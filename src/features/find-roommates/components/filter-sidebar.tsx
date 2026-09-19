@@ -29,15 +29,15 @@ export function FilterSidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col rounded-2xl bg-[#f8f5f1] dark:bg-card p-5 border border-border/50 shadow-sm",
+        "flex flex-col rounded-2xl border border-border/50 bg-card p-5 shadow-sm",
         className
       )}
     >
       {/* Sidebar Header */}
       <div className="flex items-center justify-between border-b border-border/40 pb-4">
-        <div className="flex items-center gap-2 text-foreground font-medium text-base">
+        <div className="flex items-center gap-2 text-base font-medium text-foreground">
           <SlidersHorizontal className="size-4 text-primary" />
-          <span className="font-roboto-slab text-lg font-semibold tracking-tight">
+          <span className="font-heading text-lg font-semibold tracking-tight">
             Filters
           </span>
         </div>
@@ -68,12 +68,14 @@ export function FilterSidebar({
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-all",
                   isSelected
-                    ? "bg-[#efe7db] dark:bg-accent text-foreground shadow-xs font-semibold"
-                    : "text-muted-foreground hover:bg-[#f1ebd3]/50 hover:text-foreground"
+                    ? "bg-secondary font-semibold text-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <span>{area}</span>
-                {isSelected && <Check className="size-4 text-primary stroke-[2.5]" />}
+                {isSelected && (
+                  <Check className="size-4 stroke-[2.5] text-primary" />
+                )}
               </button>
             )
           })}
@@ -81,7 +83,7 @@ export function FilterSidebar({
       </div>
 
       {/* BUDGET Section */}
-      <div className="pt-4 pb-2 border-t border-border/30">
+      <div className="border-t border-border/30 pt-4 pb-2">
         <h3 className="mb-2 text-[0.6875rem] font-bold tracking-wider text-muted-foreground uppercase">
           Budget
         </h3>
@@ -96,12 +98,14 @@ export function FilterSidebar({
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-all",
                   isSelected
-                    ? "bg-[#efe7db] dark:bg-accent text-foreground shadow-xs font-semibold"
-                    : "text-muted-foreground hover:bg-[#f1ebd3]/50 hover:text-foreground"
+                    ? "bg-secondary font-semibold text-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <span>{budget}</span>
-                {isSelected && <Check className="size-4 text-primary stroke-[2.5]" />}
+                {isSelected && (
+                  <Check className="size-4 stroke-[2.5] text-primary" />
+                )}
               </button>
             )
           })}
@@ -109,7 +113,7 @@ export function FilterSidebar({
       </div>
 
       {/* MOVE-IN DATE Section */}
-      <div className="pt-4 pb-1 border-t border-border/30">
+      <div className="border-t border-border/30 pt-4 pb-1">
         <h3 className="mb-2 text-[0.6875rem] font-bold tracking-wider text-muted-foreground uppercase">
           Move-in date
         </h3>
@@ -124,12 +128,14 @@ export function FilterSidebar({
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-all",
                   isSelected
-                    ? "bg-[#efe7db] dark:bg-accent text-foreground shadow-xs font-semibold"
-                    : "text-muted-foreground hover:bg-[#f1ebd3]/50 hover:text-foreground"
+                    ? "bg-secondary font-semibold text-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <span>{date}</span>
-                {isSelected && <Check className="size-4 text-primary stroke-[2.5]" />}
+                {isSelected && (
+                  <Check className="size-4 stroke-[2.5] text-primary" />
+                )}
               </button>
             )
           })}

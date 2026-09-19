@@ -11,7 +11,7 @@ import { LandingPage } from "@/features/landingpage"
 export function App() {
   return (
     <BrowserRouter>
-      <div className="flex min-h-svh flex-col font-sans antialiased text-foreground bg-background">
+      <div className="flex min-h-svh flex-col bg-background font-sans text-foreground antialiased">
         <Toaster />
         <a
           href="#main"

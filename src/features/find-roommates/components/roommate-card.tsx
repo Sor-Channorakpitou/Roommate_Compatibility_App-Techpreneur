@@ -22,20 +22,20 @@ export function RoommateCard({
   // Determine match score badge style based on score value
   const getMatchBadgeStyle = (score: number) => {
     if (score >= 85) {
-      return "bg-[#d4f2d2] dark:bg-emerald-950/60 text-[#1f561d] dark:text-emerald-300"
+      return "bg-sage text-sage-foreground"
     }
     if (score >= 70) {
-      return "bg-[#ffe0d3] dark:bg-amber-950/60 text-[#7a2e0e] dark:text-amber-300"
+      return "bg-peach text-peach-foreground"
     }
-    return "bg-[#eee6d9] dark:bg-stone-800 text-[#5f5140] dark:text-stone-300"
+    return "bg-muted text-muted-foreground"
   }
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
       {/* Banner / Avatar Placeholder */}
-      <div className="relative flex h-44 w-full items-center justify-center bg-[#eae0d2] dark:bg-stone-800">
+      <div className="relative flex h-44 w-full items-center justify-center bg-secondary">
         {/* Initials Placeholder */}
-        <span className="font-roboto-slab text-5xl font-light tracking-widest text-[#9c856e] opacity-80 transition-transform duration-300 group-hover:scale-105 dark:text-stone-400">
+        <span className="font-heading text-5xl font-light tracking-widest text-muted-foreground/60 opacity-80 transition-transform duration-300 group-hover:scale-105">
           {profile.initials}
         </span>
 
@@ -52,7 +52,7 @@ export function RoommateCard({
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
             aria-label="More options"
-            className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground shadow-xs transition-all hover:bg-background hover:scale-105"
+            className="flex size-8 items-center justify-center rounded-full bg-background/80 text-foreground shadow-xs transition-all hover:scale-105 hover:bg-background"
           >
             <MoreHorizontal className="size-4" />
           </button>
@@ -92,8 +92,11 @@ export function RoommateCard({
         <div className="flex flex-col gap-3">
           {/* Header Row: Name & Age + Match Badge */}
           <div className="flex items-baseline justify-between gap-2">
-            <h3 className="font-roboto-slab text-xl font-medium tracking-tight text-foreground">
-              {profile.name}, <span className="font-sans font-normal text-muted-foreground">{profile.age}</span>
+            <h3 className="font-heading text-xl font-medium tracking-tight text-foreground">
+              {profile.name},{" "}
+              <span className="font-sans font-normal text-muted-foreground">
+                {profile.age}
+              </span>
             </h3>
 
             <span
@@ -124,7 +127,7 @@ export function RoommateCard({
             {profile.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-[#f3ede5] dark:bg-muted px-3 py-1 text-[0.75rem] font-medium text-foreground/90"
+                className="rounded-full bg-muted px-3 py-1 text-[0.75rem] font-medium text-foreground/90"
               >
                 {tag}
               </span>
@@ -145,7 +148,7 @@ export function RoommateCard({
           <Button
             size="pill-xs"
             onClick={() => onSendMatch(profile)}
-            className="bg-[#6d2504] dark:bg-primary px-4 font-medium text-white shadow-xs transition-all hover:bg-[#581e03] hover:shadow"
+            className="px-4 font-medium shadow-xs transition-all hover:bg-primary/90 hover:shadow"
           >
             Send match
           </Button>

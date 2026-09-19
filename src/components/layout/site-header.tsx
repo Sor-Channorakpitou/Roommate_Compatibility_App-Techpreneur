@@ -1,7 +1,15 @@
 import * as React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { toast } from "sonner"
-import { ChevronDown, Home, LogOut, Menu, MessageSquare, User, X } from "lucide-react"
+import {
+  ChevronDown,
+  Home,
+  LogOut,
+  Menu,
+  MessageSquare,
+  User,
+  X,
+} from "lucide-react"
 import { cn } from "cn"
 
 import { useAuth } from "@/context/auth-context"
@@ -112,7 +120,7 @@ function UserMenu({ className }: { className?: string }) {
         onClick={() => setIsOpen((o) => !o)}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="flex items-center gap-2 rounded-full py-1 pr-3 pl-1 transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <Avatar size="sm">
           <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
@@ -132,15 +140,17 @@ function UserMenu({ className }: { className?: string }) {
 
       <div
         className={cn(
-          "absolute right-0 top-full z-50 mt-2 w-52 origin-top-right rounded-xl bg-card p-1.5 shadow-floating ring-1 ring-foreground/10 transition-all duration-200 ease-out",
+          "absolute top-full right-0 z-50 mt-2 w-52 origin-top-right rounded-xl bg-card p-1.5 shadow-floating ring-1 ring-foreground/10 transition-all duration-200 ease-out",
           isOpen
-            ? "scale-100 opacity-100 visible"
-            : "pointer-events-none scale-95 opacity-0 invisible"
+            ? "visible scale-100 opacity-100"
+            : "pointer-events-none invisible scale-95 opacity-0"
         )}
         role="menu"
       >
         <div className="px-3 py-2.5">
-          <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+          <p className="truncate text-sm font-semibold text-foreground">
+            {user.name}
+          </p>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </div>
 
@@ -202,7 +212,9 @@ function MobileUserSection() {
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+          <p className="truncate text-sm font-semibold text-foreground">
+            {user.name}
+          </p>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         </div>
       </div>

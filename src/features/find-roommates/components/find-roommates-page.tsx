@@ -56,13 +56,22 @@ export function FindRoommatesPage() {
         if (filters.budget === "Under $200" && candidate.priceMin >= 200) {
           return false
         }
-        if (filters.budget === "$200–$300" && (candidate.priceMax < 200 || candidate.priceMin > 300)) {
+        if (
+          filters.budget === "$200–$300" &&
+          (candidate.priceMax < 200 || candidate.priceMin > 300)
+        ) {
           return false
         }
-        if (filters.budget === "$300–$400" && (candidate.priceMax < 300 || candidate.priceMin > 400)) {
+        if (
+          filters.budget === "$300–$400" &&
+          (candidate.priceMax < 300 || candidate.priceMin > 400)
+        ) {
           return false
         }
-        if (filters.budget === "$400–$500" && (candidate.priceMax < 400 || candidate.priceMin > 500)) {
+        if (
+          filters.budget === "$400–$500" &&
+          (candidate.priceMax < 400 || candidate.priceMin > 500)
+        ) {
           return false
         }
         if (filters.budget === "$500+" && candidate.priceMax < 500) {
@@ -92,11 +101,11 @@ export function FindRoommatesPage() {
   }
 
   return (
-    <Container className="pt-8 pb-16 font-roboto-slab">
+    <Container className="pt-8 pb-16">
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed top-24 right-6 z-50 flex items-center gap-3 rounded-2xl bg-[#6d2504] px-5 py-3.5 text-white shadow-xl animate-in slide-in-from-top-4 duration-300">
-          <div className="flex size-7 items-center justify-center rounded-full bg-white/20">
+        <div className="fixed top-24 right-6 z-50 flex animate-in items-center gap-3 rounded-2xl bg-primary px-5 py-3.5 text-primary-foreground shadow-xl duration-300 slide-in-from-top-4">
+          <div className="flex size-7 items-center justify-center rounded-full bg-primary-foreground/20">
             <Check className="size-4" />
           </div>
           <span className="text-sm font-medium">{toastMessage}</span>
@@ -104,12 +113,12 @@ export function FindRoommatesPage() {
       )}
 
       {/* Main Screen Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-roboto-slab text-4xl font-normal tracking-tight text-foreground md:text-5xl">
+          <h1 className="font-heading text-4xl font-normal tracking-tight text-foreground md:text-5xl">
             {filteredRoommates.length} matches
           </h1>
-          <p className="text-sm text-muted-foreground mt-1 font-sans">
+          <p className="mt-1 font-sans text-sm text-muted-foreground">
             People in Phnom Penh who live the way you do
           </p>
         </div>
@@ -121,7 +130,7 @@ export function FindRoommatesPage() {
             variant="outline"
             size="pill-xs"
             onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-            className="lg:hidden flex items-center gap-2 text-xs"
+            className="flex items-center gap-2 text-xs lg:hidden"
           >
             <Filter className="size-3.5" />
             Filters
@@ -132,13 +141,13 @@ export function FindRoommatesPage() {
             <span className="text-xs font-medium text-muted-foreground">
               Sort:
             </span>
-            <div className="flex items-center gap-1.5 rounded-full bg-[#f1ebd3]/60 dark:bg-muted p-1">
+            <div className="flex items-center gap-1.5 rounded-full bg-muted p-1">
               <button
                 type="button"
                 onClick={() => setSortBy("best-match")}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
                   sortBy === "best-match"
-                    ? "bg-[#6d2504] text-white shadow-xs"
+                    ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-foreground hover:text-primary"
                 }`}
               >
@@ -149,7 +158,7 @@ export function FindRoommatesPage() {
                 onClick={() => setSortBy("budget")}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
                   sortBy === "budget"
-                    ? "bg-[#6d2504] text-white shadow-xs"
+                    ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-foreground hover:text-primary"
                 }`}
               >
@@ -163,7 +172,7 @@ export function FindRoommatesPage() {
       {/* Main Grid Content */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         {/* Desktop Filter Sidebar */}
-        <div className="hidden lg:block lg:col-span-1">
+        <div className="hidden lg:col-span-1 lg:block">
           <FilterSidebar
             filters={filters}
             onFilterChange={setFilters}
@@ -174,7 +183,7 @@ export function FindRoommatesPage() {
 
         {/* Mobile Filter Collapsible Area */}
         {isMobileFilterOpen && (
-          <div className="lg:hidden col-span-1 mb-4">
+          <div className="col-span-1 mb-4 lg:hidden">
             <FilterSidebar
               filters={filters}
               onFilterChange={setFilters}
@@ -199,14 +208,15 @@ export function FindRoommatesPage() {
           ) : (
             /* Empty State Fallback */
             <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 bg-card p-12 text-center shadow-xs">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground mb-4">
+              <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                 <Search className="size-6 text-primary" />
               </div>
               <h3 className="font-heading text-xl font-medium text-foreground">
                 No roommate matches found
               </h3>
               <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                Try widening your area, budget, or move-in date filters to see more candidates in Phnom Penh.
+                Try widening your area, budget, or move-in date filters to see
+                more candidates in Phnom Penh.
               </p>
               <Button
                 variant="outline"

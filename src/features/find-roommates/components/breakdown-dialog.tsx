@@ -20,28 +20,28 @@ export function BreakdownDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in"
+        className="fixed inset-0 animate-in bg-black/40 backdrop-blur-xs transition-opacity fade-in"
         onClick={onClose}
       />
 
       {/* Modal Dialog Window */}
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-card shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="relative z-10 w-full max-w-lg animate-in overflow-hidden rounded-3xl border border-border bg-card shadow-2xl duration-200 zoom-in-95">
         {/* Top Banner Header */}
-        <div className="relative flex items-center justify-between bg-[#efe6d8] dark:bg-stone-800 p-6 pb-5">
+        <div className="relative flex items-center justify-between bg-secondary p-6 pb-5">
           <div className="flex items-center gap-4">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-[#dccdb9] dark:bg-stone-700 font-roboto-slab text-2xl font-light text-[#7a644d] dark:text-stone-300 shadow-xs">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-border font-heading text-2xl font-light text-muted-foreground shadow-xs">
               {profile.initials}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-roboto-slab text-2xl font-medium tracking-tight text-foreground">
+                <h3 className="font-heading text-2xl font-medium tracking-tight text-foreground">
                   {profile.name}, {profile.age}
                 </h3>
-                <span className="rounded-full bg-[#d4f2d2] dark:bg-emerald-950 px-2.5 py-0.5 text-xs font-bold text-[#1f561d] dark:text-emerald-300">
+                <span className="rounded-full bg-sage px-2.5 py-0.5 text-xs font-bold text-sage-foreground">
                   {profile.matchScore}% match
                 </span>
               </div>
-              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mt-0.5">
+              <p className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                 <MapPin className="size-3.5 text-primary" />
                 {profile.area} • {profile.priceDisplay}
               </p>
@@ -51,18 +51,18 @@ export function BreakdownDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+            className="flex size-8 items-center justify-center rounded-full bg-background/80 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
           >
             <X className="size-4" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="max-h-[70vh] overflow-y-auto p-6 flex flex-col gap-6">
+        <div className="flex max-h-[70vh] flex-col gap-6 overflow-y-auto p-6">
           {/* Bio */}
           {profile.bio && (
-            <div className="rounded-2xl bg-surface/60 p-4 border border-border/40">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            <div className="rounded-2xl border border-border/40 bg-surface/60 p-4">
+              <h4 className="mb-1 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                 About {profile.name.split(" ")[0]}
               </h4>
               <p className="text-sm leading-relaxed text-foreground">
@@ -73,9 +73,9 @@ export function BreakdownDialog({
 
           {/* Lifestyle Breakdown Header */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="mb-4 flex items-center gap-2">
               <Sparkles className="size-4 text-primary" />
-              <h4 className="font-roboto-slab text-lg font-semibold tracking-tight text-foreground">
+              <h4 className="font-heading text-lg font-semibold tracking-tight text-foreground">
                 Lifestyle Compatibility Breakdown
               </h4>
             </div>
@@ -84,13 +84,13 @@ export function BreakdownDialog({
               {profile.breakdown.map((item) => (
                 <div
                   key={item.category}
-                  className="flex flex-col gap-1.5 rounded-xl bg-background p-3.5 border border-border/40"
+                  className="flex flex-col gap-1.5 rounded-xl border border-border/40 bg-background p-3.5"
                 >
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-foreground">
                       {item.category}
                     </span>
-                    <span className="font-bold text-primary text-xs">
+                    <span className="text-xs font-bold text-primary">
                       {item.score}% sync
                     </span>
                   </div>
@@ -98,13 +98,13 @@ export function BreakdownDialog({
                   {/* Progress Bar */}
                   <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      className="h-full rounded-full bg-primary transition-all duration-500"
                       style={{ width: `${item.score}%` }}
                     />
                   </div>
 
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <CheckCircle2 className="size-3 text-sage-foreground shrink-0" />
+                  <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                    <CheckCircle2 className="size-3 shrink-0 text-sage-foreground" />
                     {item.detail}
                   </p>
                 </div>
@@ -125,7 +125,7 @@ export function BreakdownDialog({
               onSendMatch(profile)
               onClose()
             }}
-            className="bg-[#6d2504] dark:bg-primary font-medium text-white hover:bg-[#581e03]"
+            className="font-medium hover:bg-primary/90"
           >
             Send Match Request
           </Button>
