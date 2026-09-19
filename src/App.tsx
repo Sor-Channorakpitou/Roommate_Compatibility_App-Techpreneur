@@ -5,12 +5,13 @@ import { SiteHeader } from "@/components/layout/site-header"
 import { Toaster } from "@/components/ui/sonner"
 import { LoginPage, RegisterPage } from "@/features/auth"
 import { CompatibilityPage } from "@/features/compatibility"
+import { FindRoommatesPage } from "@/features/find-roommates"
 import { LandingPage } from "@/features/landing"
 
 export function App() {
   return (
     <BrowserRouter>
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-svh flex-col font-sans antialiased text-foreground bg-background">
         <Toaster />
         <a
           href="#main"
@@ -22,6 +23,8 @@ export function App() {
         <main id="main" className="flex-1 overflow-x-clip">
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/browse" element={<FindRoommatesPage />} />
+            <Route path="/find-roommates" element={<FindRoommatesPage />} />
             <Route path="/sign-in" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/compatibility-test" element={<CompatibilityPage />} />
@@ -34,4 +37,3 @@ export function App() {
 }
 
 export default App
-

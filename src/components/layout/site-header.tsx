@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { toast } from "sonner"
 import { ChevronDown, Home, LogOut, Menu, MessageSquare, User, X } from "lucide-react"
 import { cn } from "cn"
@@ -12,15 +12,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { mainNav, type NavLink } from "@/config/site"
 
-/** The landing page is the site root, so "Home" is the current page. */
-const CURRENT_PATH = "/"
-
 function NavItem({ link }: { link: NavLink }) {
-  const isActive = link.href === CURRENT_PATH
+  const location = useLocation()
+  const isActive =
+    location.pathname === link.href ||
+    (link.href === "/browse" && location.pathname === "/find-roommates")
 
   return (
-    <a
-      href={link.href}
+    <Link
+      to={link.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "rounded-sm px-4 font-semibold transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -30,13 +30,9 @@ function NavItem({ link }: { link: NavLink }) {
       )}
     >
       {link.label}
-    </a>
+    </Link>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Action Buttons (Messages & Create Room)
-// ---------------------------------------------------------------------------
 
 function ActionButtons() {
   return (
@@ -64,10 +60,6 @@ function ActionButtons() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Signed-in user dropdown
-// ---------------------------------------------------------------------------
-
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -83,7 +75,6 @@ function UserMenu({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement>(null)
 
-  // Close on click outside
   React.useEffect(() => {
     if (!isOpen) return
     function handleClick(e: MouseEvent) {
@@ -95,7 +86,6 @@ function UserMenu({ className }: { className?: string }) {
     return () => document.removeEventListener("mousedown", handleClick)
   }, [isOpen])
 
-  // Close on Escape
   React.useEffect(() => {
     if (!isOpen) return
     function handleKey(e: KeyboardEvent) {
@@ -140,7 +130,6 @@ function UserMenu({ className }: { className?: string }) {
         />
       </button>
 
-      {/* Dropdown */}
       <div
         className={cn(
           "absolute right-0 top-full z-50 mt-2 w-52 origin-top-right rounded-xl bg-card p-1.5 shadow-floating ring-1 ring-foreground/10 transition-all duration-200 ease-out",
@@ -150,7 +139,6 @@ function UserMenu({ className }: { className?: string }) {
         )}
         role="menu"
       >
-        {/* User info header */}
         <div className="px-3 py-2.5">
           <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
@@ -192,10 +180,6 @@ function UserMenu({ className }: { className?: string }) {
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Mobile user section (for inside the hamburger menu)
-// ---------------------------------------------------------------------------
 
 function MobileUserSection() {
   const { user, logout } = useAuth()
@@ -248,10 +232,6 @@ function MobileUserSection() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Header
-// ---------------------------------------------------------------------------
-
 function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const { user } = useAuth()
@@ -267,7 +247,6 @@ function SiteHeader() {
           ))}
         </nav>
 
-        {/* Desktop actions — Messages and Create Room are always visible; swap Sign In for UserMenu when authenticated */}
         <div className="hidden items-center gap-4 lg:flex">
           <ActionButtons />
           {user ? (
@@ -330,4 +309,3 @@ function SiteHeader() {
 }
 
 export { SiteHeader }
-
