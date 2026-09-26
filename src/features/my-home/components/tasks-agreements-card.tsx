@@ -9,37 +9,45 @@ import {
   ShieldCheck,
 } from "lucide-react"
 
-import type {
-  ChoreAssignee,
-  ChoreItem,
-  ExpenseItem,
-  HouseRule,
-} from "../types"
-import { ASSIGNEE_ROTHANA, ASSIGNEE_SOPHEAK } from "../data/my-home-data"
+import type { RoomChore } from "@/lib/room-settings"
+import { formatUsd } from "@/lib/format"
+import { formatUpdatedAgo } from "../lib/household"
+import type { ChoreAssignee, ExpenseItem, HouseRule } from "../types"
 
 type TasksAgreementsCardProps = {
-  chores: ChoreItem[]
+  chores: RoomChore[]
+  assignees: ChoreAssignee[]
   houseRules: HouseRule[]
   expenses: ExpenseItem[]
+  rotateChoresWeekly: boolean
+  updatedAt: string
+  isSaving: boolean
   onToggleChore: (choreId: string) => void
-  onReassignChore: (choreId: string, assignee: ChoreAssignee) => void
+  onReassignChore: (choreId: string, assigneeId: string) => void
   onAddChoreClick: () => void
   onSwapChoreClick: () => void
-  onPayExpenseClick?: (expense: ExpenseItem) => void
+  onMarkPaid: (expense: ExpenseItem) => void
 }
 
 type TabType = "house-rules" | "chores" | "expenses"
 
 export function TasksAgreementsCard({
   chores,
+  assignees,
   houseRules,
   expenses,
+  rotateChoresWeekly,
+  updatedAt,
+  isSaving,
   onToggleChore,
   onReassignChore,
   onAddChoreClick,
   onSwapChoreClick,
-  onPayExpenseClick,
+  onMarkPaid,
 }: TasksAgreementsCardProps) {
+  const assigneeOf = (id: string) =>
+    assignees.find((a) => a.id === id) ?? assignees[assignees.length - 1]
+  const myChoreCount = chores.filter((c) => c.assignee === "host").length
   const [activeTab, setActiveTab] = React.useState<TabType>("chores")
   const [openDropdownId, setOpenDropdownId] = React.useState<string | null>(null)
 
@@ -83,15 +91,24 @@ export function TasksAgreementsCard({
           </button>
         </div>
 
-        <span className="text-xs text-muted-foreground">Updated 2d ago</span>
+        <span className="text-xs text-muted-foreground">
+          Updated {formatUpdatedAgo(updatedAt)}
+        </span>
       </div>
 
       {/* Tab Panel 1: Chores (matches screenshot) */}
       {activeTab === "chores" && (
         <div className="mt-5 space-y-3">
           <div className="space-y-2.5">
+            {chores.length === 0 && (
+              <p className="rounded-xl border border-dashed border-[#e0d6cc] p-6 text-center text-xs text-muted-foreground">
+                No chores yet. Add the first one to share the load.
+              </p>
+            )}
             {chores.map((chore) => {
               const isDropdownOpen = openDropdownId === chore.id
+              const isCompleted = Boolean(chore.completed)
+              const assignee = assigneeOf(chore.assignee)
 
               return (
                 <div
@@ -103,22 +120,23 @@ export function TasksAgreementsCard({
                     <button
                       type="button"
                       role="checkbox"
-                      aria-checked={chore.isCompleted}
-                      aria-label={`Mark "${chore.title}" as ${chore.isCompleted ? "incomplete" : "complete"}`}
+                      aria-checked={isCompleted}
+                      disabled={isSaving}
+                      aria-label={`Mark "${chore.title}" as ${isCompleted ? "incomplete" : "complete"}`}
                       onClick={() => onToggleChore(chore.id)}
                       className={`flex size-5 shrink-0 items-center justify-center rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                        chore.isCompleted
+                        isCompleted
                           ? "bg-[#6d2504] text-white"
                           : "border border-[#c5b8ac] bg-white hover:border-[#8c7e77]"
                       }`}
                     >
-                      {chore.isCompleted && <Check className="size-3.5 stroke-[3]" />}
+                      {isCompleted && <Check className="size-3.5 stroke-[3]" />}
                     </button>
 
                     <div>
                       <h4
                         className={`text-sm font-semibold transition-all ${
-                          chore.isCompleted
+                          isCompleted
                             ? "font-heading text-[#8c7e77] line-through sm:text-base"
                             : "text-foreground sm:text-base"
                         }`}
@@ -126,9 +144,7 @@ export function TasksAgreementsCard({
                         {chore.title}
                       </h4>
                       <p className="text-xs text-muted-foreground">
-                        {chore.recurrence}
-                        {chore.completedNote ? ` • ${chore.completedNote}` : ""}
-                        {chore.dueNote ? ` • ${chore.dueNote}` : ""}
+                        {chore.schedule}
                       </p>
                     </div>
                   </div>
@@ -145,12 +161,12 @@ export function TasksAgreementsCard({
                         }
                         className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors hover:ring-1 hover:ring-black/10 focus-visible:outline-none"
                         style={{
-                          backgroundColor: chore.assignee.badgeBg,
-                          color: chore.assignee.textColor,
+                          backgroundColor: assignee.badgeBg,
+                          color: assignee.textColor,
                         }}
                       >
-                        <span className="font-bold">{chore.assignee.initials}</span>
-                        <span>{chore.assignee.shortLabel}</span>
+                        <span className="font-bold">{assignee.initials}</span>
+                        <span>{assignee.label}</span>
                         <ChevronDown className="size-3 opacity-70" aria-hidden="true" />
                       </button>
 
@@ -164,32 +180,30 @@ export function TasksAgreementsCard({
                             <p className="px-2.5 py-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                               Assign to
                             </p>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onReassignChore(chore.id, ASSIGNEE_SOPHEAK)
-                                setOpenDropdownId(null)
-                              }}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
-                            >
-                              <span className="flex size-5 items-center justify-center rounded-full bg-[#fce5dc] text-[10px] font-bold text-[#9c4220]">
-                                SC
-                              </span>
-                              <span>Sopheak (You)</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onReassignChore(chore.id, ASSIGNEE_ROTHANA)
-                                setOpenDropdownId(null)
-                              }}
-                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
-                            >
-                              <span className="flex size-5 items-center justify-center rounded-full bg-[#d8edd9] text-[10px] font-bold text-[#276e33]">
-                                RP
-                              </span>
-                              <span>Rothana P.</span>
-                            </button>
+                            {assignees.map((option) => (
+                              <button
+                                key={option.id}
+                                type="button"
+                                onClick={() => {
+                                  if (option.id !== chore.assignee) {
+                                    onReassignChore(chore.id, option.id)
+                                  }
+                                  setOpenDropdownId(null)
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
+                              >
+                                <span
+                                  className="flex size-5 items-center justify-center rounded-full text-[9px] font-bold"
+                                  style={{
+                                    backgroundColor: option.badgeBg,
+                                    color: option.textColor,
+                                  }}
+                                >
+                                  {option.initials}
+                                </span>
+                                <span>{option.label}</span>
+                              </button>
+                            ))}
                           </div>
                         </>
                       )}
@@ -198,12 +212,12 @@ export function TasksAgreementsCard({
                     {/* Done vs Pending status badge */}
                     <span
                       className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                        chore.isCompleted
+                        isCompleted
                           ? "bg-[#e2f3e4] text-[#276e33]"
                           : "bg-[#faece6] text-[#b8532c]"
                       }`}
                     >
-                      {chore.isCompleted ? "Done" : "Pending"}
+                      {isCompleted ? "Done" : "Pending"}
                     </span>
                   </div>
                 </div>
@@ -216,12 +230,13 @@ export function TasksAgreementsCard({
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <RefreshCw className="size-3.5 text-muted-foreground/80" aria-hidden="true" />
-                Auto-rotates Sunday 8 PM
+                {rotateChoresWeekly ? "Rotates weekly" : "Fixed assignments"}
               </span>
               <span aria-hidden="true">•</span>
               <button
                 type="button"
                 onClick={onSwapChoreClick}
+                disabled={chores.length < 2}
                 className="font-medium text-foreground underline decoration-muted-foreground/40 underline-offset-2 transition-colors hover:text-primary hover:decoration-primary"
               >
                 Swap Chore
@@ -230,7 +245,7 @@ export function TasksAgreementsCard({
 
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground">
-                Assignee: <strong className="font-semibold text-foreground">Sopheak (You)</strong>
+                Yours: <strong className="font-semibold text-foreground">{myChoreCount}</strong>
               </span>
 
               <button
@@ -267,7 +282,7 @@ export function TasksAgreementsCard({
                           {rule.title}
                         </h4>
                         <span className="rounded-full bg-[#e8f2e9] px-2 py-0.5 text-[10px] font-semibold text-[#276e33]">
-                          Mutual Rule
+                          {rule.category}
                         </span>
                       </div>
                       <p className="text-xs leading-relaxed text-muted-foreground">
@@ -276,21 +291,20 @@ export function TasksAgreementsCard({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-[#eee6dc] pt-2.5 text-[11px] text-muted-foreground">
-                    <span>Category: {rule.category}</span>
-                    <span className="inline-flex items-center gap-1 text-[#276e33]">
-                      <ShieldCheck className="size-3" />
-                      Both agreed
-                    </span>
-                  </div>
+
                 </div>
               )
             })}
           </div>
 
           <div className="flex items-center justify-between border-t border-[#f0ebe5] pt-4 text-xs text-muted-foreground">
-            <span>Rules are signed during lease onboarding</span>
-            <span className="font-medium text-foreground">Last updated: Oct 12, 2026</span>
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="size-3.5 text-[#276e33]" />
+              Set when you created the room
+            </span>
+            <span className="font-medium text-foreground">
+              Last updated {formatUpdatedAgo(updatedAt)}
+            </span>
           </div>
         </div>
       )}
@@ -313,14 +327,16 @@ export function TasksAgreementsCard({
                       {exp.title}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      Due {exp.dueDate} • Total ${exp.totalAmount}
+                      {exp.dueNote} • Total {exp.isEstimate ? "~" : ""}
+                      {formatUsd(exp.totalAmount)}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-1.5">
                   <span className="text-sm font-bold text-foreground">
-                    Your share: ${exp.yourShare}
+                    Your share: {exp.isEstimate ? "~" : ""}
+                    {formatUsd(exp.yourShare)}
                   </span>
                   <div className="flex items-center gap-2">
                     <span
@@ -332,14 +348,15 @@ export function TasksAgreementsCard({
                     >
                       {exp.status}
                     </span>
-                    {exp.status === "Pending" && onPayExpenseClick && (
+                    {exp.status === "Pending" && (
                       <button
                         type="button"
-                        onClick={() => onPayExpenseClick(exp)}
-                        className="inline-flex items-center gap-1 rounded-full bg-[#7a3418] px-2.5 py-0.5 text-xs font-medium text-white hover:bg-[#682c14]"
+                        disabled={isSaving}
+                        onClick={() => onMarkPaid(exp)}
+                        className="inline-flex items-center gap-1 rounded-full bg-[#7a3418] px-2.5 py-0.5 text-xs font-medium text-white hover:bg-[#682c14] disabled:opacity-50"
                       >
                         <CreditCard className="size-3" />
-                        Pay
+                        Mark paid
                       </button>
                     )}
                   </div>
@@ -349,8 +366,10 @@ export function TasksAgreementsCard({
           </div>
 
           <div className="flex items-center justify-between border-t border-[#f0ebe5] pt-4 text-xs text-muted-foreground">
-            <span>Expenses split automatically via ABA PayWay / KHQR</span>
-            <span className="font-semibold text-foreground">Next billing cycle: Nov 1</span>
+            <span>Split evenly across the household. Paid status resets each month.</span>
+            <span className="font-semibold text-foreground">
+              {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+            </span>
           </div>
         </div>
       )}

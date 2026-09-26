@@ -5,6 +5,8 @@ import { DoorOpen, Home, LogOut, Menu, MessageSquare, User, X } from "lucide-rea
 import { cn } from "cn"
 
 import { useAuth } from "@/context/auth-context"
+import { useUnreadCount } from "@/hooks/use-unread-count"
+import { getInitials } from "@/lib/format"
 import { ButtonLink } from "@/components/common/button-link"
 import { Brand } from "@/components/layout/brand"
 import { Container } from "@/components/layout/container"
@@ -38,6 +40,8 @@ function NavItem({ link }: { link: NavLink }) {
 }
 
 function ActionButtons() {
+  const { user } = useAuth()
+  const unread = useUnreadCount(user?.id)
   return (
     <>
       <Button
@@ -49,8 +53,14 @@ function ActionButtons() {
       >
         <MessageSquare />
         Messages
-        <span aria-hidden className="ml-0.5 size-2 rounded-full bg-primary" />
-        <span className="sr-only">(unread messages)</span>
+        {unread > 0 && (
+          <>
+            <span aria-hidden className="ml-0.5 size-2 rounded-full bg-primary" />
+            <span className="sr-only">
+              ({unread} unread {unread === 1 ? "message" : "messages"})
+            </span>
+          </>
+        )}
       </Button>
       <Button
         nativeButton={false}
@@ -63,16 +73,6 @@ function ActionButtons() {
       </Button>
     </>
   )
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase()
 }
 
 function UserMenu({ className }: { className?: string }) {

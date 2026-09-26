@@ -1,48 +1,89 @@
 import * as React from "react"
-import { Check, Copy, QrCode, Share2, Users, X } from "lucide-react"
+import { Check, Copy, UserPlus, Users, X } from "lucide-react"
 import { toast } from "sonner"
+
+import { isValidInviteContact } from "@/features/create-room/lib/room-calculations"
+import type { Invitee } from "@/features/create-room/types"
 
 type InviteModalProps = {
   isOpen: boolean
   onClose: () => void
-  roomName?: string
+  roomName: string
+  joinCode: string
+  /** Spots left once the host and pending invites are counted. */
+  openSpots: number
+  /** Resolves true once saved. */
+  onInvite: (invitee: Invitee) => Promise<boolean>
 }
+
+const inputClass =
+  "w-full rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3 py-2 text-xs text-foreground focus:border-[#7a3418] focus:outline-none"
 
 export function InviteModal({
   isOpen,
   onClose,
-  roomName = "Sunflower Sanctuary",
+  roomName,
+  joinCode,
+  openSpots,
+  onInvite,
 }: InviteModalProps) {
   const [copied, setCopied] = React.useState(false)
-  const inviteCode = "SUN-7049"
-  const inviteUrl = `https://roomiematch.kh/join/sunflower-sanctuary?code=${inviteCode}`
+  const [name, setName] = React.useState("")
+  const [contact, setContact] = React.useState("")
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   if (!isOpen) return null
 
-  function handleCopy() {
-    navigator.clipboard.writeText(inviteUrl)
-    setCopied(true)
-    toast.success("Invite link copied to clipboard!")
-    setTimeout(() => setCopied(false), 2000)
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(joinCode)
+      setCopied(true)
+      toast.success("Join code copied")
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error("Couldn't copy. Select the code and copy it manually.")
+    }
+  }
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    const value = contact.trim()
+    if (!isValidInviteContact(value)) {
+      toast.error("Enter an email or a Telegram @handle (5+ characters).")
+      return
+    }
+    setIsSubmitting(true)
+    const saved = await onInvite({
+      id: `invitee-${crypto.randomUUID()}`,
+      name: name.trim() || value,
+      contact: value,
+    })
+    setIsSubmitting(false)
+    if (!saved) return
+    setName("")
+    setContact("")
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      {/* Dialog */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-[#e8dfd8] bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invite-title"
+        className="relative z-10 w-full max-w-md rounded-2xl border border-[#e8dfd8] bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200"
+      >
         <div className="flex items-center justify-between border-b border-[#f0ebe5] pb-4">
           <div className="flex items-center gap-2">
             <div className="flex size-9 items-center justify-center rounded-full bg-[#faece6] text-[#7a3418]">
               <Users className="size-4" />
             </div>
             <div>
-              <h3 className="font-heading text-lg font-semibold text-foreground">
+              <h3 id="invite-title" className="font-heading text-lg font-semibold text-foreground">
                 Invite Roommate
               </h3>
               <p className="text-xs text-muted-foreground">{roomName}</p>
@@ -58,75 +99,80 @@ export function InviteModal({
           </button>
         </div>
 
-        <div className="mt-4 space-y-4">
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Share this private link with your potential roommate. They can take the lifestyle compatibility test and apply to join your household sanctuary.
-          </p>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Unique Household Code
-            </label>
-            <div className="flex items-center justify-between rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3.5 py-2.5">
-              <span className="font-mono text-base font-bold tracking-widest text-[#7a3418]">
-                {inviteCode}
-              </span>
-              <span className="rounded-full bg-[#eaf3eb] px-2 py-0.5 text-[11px] font-semibold text-[#2d7338]">
-                Active
-              </span>
+        <div className="mt-4 space-y-5">
+          {joinCode && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-foreground">Household join code</p>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3.5 py-2.5">
+                <span className="font-mono text-base font-bold tracking-widest text-[#7a3418]">
+                  {joinCode}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#7a3418] px-3 py-1 text-xs font-medium text-white hover:bg-[#682c14]"
+                >
+                  {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Share it with roommates you've already met here in Messages.
+              </p>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Direct Invite Link
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                readOnly
-                value={inviteUrl}
-                className="w-full truncate rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3 py-2 text-xs text-muted-foreground focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#7a3418] px-3.5 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#682c14]"
-              >
-                {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-[#e0d6cc] bg-[#fdfbf7] p-3 text-center">
-            <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#faece6] text-[#7a3418]">
-              <QrCode className="size-5" />
-            </div>
-            <p className="mt-1 text-xs font-semibold text-foreground">
-              Scan to join with mobile
+          <form onSubmit={handleInvite} className="space-y-3 border-t border-[#f0ebe5] pt-4">
+            <p className="text-xs font-semibold text-foreground">
+              Add someone to the household list
             </p>
-            <p className="text-[11px] text-muted-foreground">
-              Compatible with Telegram, WhatsApp, and RoomieMatch app
-            </p>
-          </div>
+            {openSpots > 0 ? (
+              <>
+                <input
+                  type="text"
+                  aria-label="Name (optional)"
+                  placeholder="Name (optional)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={inputClass}
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    aria-label="Email or Telegram handle"
+                    placeholder="email@example.com or @telegram"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                    className={inputClass}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#7a3418] px-3.5 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#682c14] disabled:opacity-50"
+                  >
+                    <UserPlus className="size-3.5" />
+                    Add
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {openSpots} {openSpots === 1 ? "spot" : "spots"} left in this household.
+                </p>
+              </>
+            ) : (
+              <p className="rounded-xl bg-[#f9f5f0] p-3 text-xs text-muted-foreground">
+                Every spot is taken. Remove an invite first to add someone new.
+              </p>
+            )}
+          </form>
         </div>
 
-        <div className="mt-6 flex items-center justify-end gap-2 border-t border-[#f0ebe5] pt-4">
+        <div className="mt-6 flex items-center justify-end border-t border-[#f0ebe5] pt-4">
           <button
             type="button"
             onClick={onClose}
             className="rounded-full border border-[#d6cbbe] px-4 py-1.5 text-xs font-medium text-[#4a3b34] hover:bg-[#f6efe8]"
           >
             Done
-          </button>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#7a3418] px-4 py-1.5 text-xs font-medium text-white hover:bg-[#682c14]"
-          >
-            <Share2 className="size-3.5" />
-            Share Link
           </button>
         </div>
       </div>

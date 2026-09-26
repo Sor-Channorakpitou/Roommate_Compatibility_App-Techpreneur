@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js"
 import { isSupabaseConfigured, supabase } from "@/lib/supabase"
@@ -32,8 +32,6 @@ export type AuthResult = {
   message?: string
 }
 
-export type ProfileUpdate = Pick<User, "name" | "university" | "gender">
-
 type AuthContextValue = {
   user: User | null
   /** True while initially verifying existing session with Supabase on app startup */
@@ -43,8 +41,9 @@ type AuthContextValue = {
   isSupabaseConfigured: boolean
   login: (email: string, password: string) => Promise<AuthResult>
   register: (payload: RegisterPayload) => Promise<AuthResult>
-  updateProfile: (payload: ProfileUpdate) => Promise<AuthResult>
   logout: () => Promise<void>
+  /** Re-reads the profile, e.g. after the user edits it. */
+  refreshUser: () => Promise<void>
 }
 
 // ---------------------------------------------------------------------------
@@ -106,14 +105,15 @@ async function mapSupabaseUser(authUser: SupabaseAuthUser): Promise<User> {
   try {
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("id, name, email, university, gender")
+      // The email column isn't readable through the API; auth has it anyway.
+      .select("id, name, university, gender")
       .eq("id", authUser.id)
       .maybeSingle()
 
     if (!error && profile) {
       return {
         id: profile.id,
-        email: profile.email || authUser.email || "",
+        email: authUser.email || "",
         name: profile.name || metadata.name || "User",
         university: profile.university || metadata.university || "CADT",
         gender: profile.gender || metadata.gender || "Other",
@@ -356,48 +356,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   )
 
-  const updateProfile = React.useCallback(
-    async (payload: ProfileUpdate): Promise<AuthResult> => {
-      if (!user) return { ok: false, error: "Please sign in before editing your profile." }
-      if (!isSupabaseConfigured) {
-        return { ok: false, error: "Supabase is not configured. Check your .env.local settings." }
-      }
-
-      setIsSubmitting(true)
-      try {
-        const profile = {
-          name: payload.name.trim(),
-          university: payload.university.trim(),
-          gender: payload.gender,
-        }
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .update(profile)
-          .eq("id", user.id)
-          .select("id")
-          .maybeSingle()
-
-        if (error) return { ok: false, error: formatAuthError(error) }
-        if (!data) {
-          return {
-            ok: false,
-            error: "Your profile record was not found. Please sign out and sign in again.",
-          }
-        }
-
-        const updatedUser = { ...user, ...profile }
-        setUser(updatedUser)
-        return { ok: true, user: updatedUser }
-      } catch (err) {
-        return { ok: false, error: formatAuthError(err) }
-      } finally {
-        setIsSubmitting(false)
-      }
-    },
-    [user]
-  )
-
   // Logout handler using Supabase
   const logout = React.useCallback(async () => {
     setIsSubmitting(true)
@@ -416,6 +374,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const refreshUser = React.useCallback(async () => {
+    if (!isSupabaseConfigured) return
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    setUser(session?.user ? await mapSupabaseUser(session.user) : null)
+  }, [])
+
   const value = React.useMemo<AuthContextValue>(
     () => ({
       user,
@@ -424,10 +390,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSupabaseConfigured,
       login,
       register,
-      updateProfile,
       logout,
+      refreshUser,
     }),
-    [user, isLoading, isSubmitting, login, register, updateProfile, logout]
+    [user, isLoading, isSubmitting, login, register, logout, refreshUser]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

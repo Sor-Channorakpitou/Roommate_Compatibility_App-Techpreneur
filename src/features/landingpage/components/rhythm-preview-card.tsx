@@ -1,9 +1,6 @@
-import { Bookmark } from "lucide-react"
-
 import { ButtonLink } from "@/components/common/button-link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import type { FeaturedMatch } from "@/features/landingpage/data/landing-content"
 import { getInitials } from "@/lib/utils"
@@ -21,14 +18,6 @@ function RhythmPreviewCard({ match }: { match: FeaturedMatch }) {
               {match.hub}
             </span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Save ${match.name}'s room`}
-            className="shrink-0 rounded-full bg-muted hover:bg-muted/70"
-          >
-            <Bookmark className="size-3.5" />
-          </Button>
         </div>
 
         <div className="relative h-52 overflow-hidden rounded-lg shadow-[inset_0_2px_4px_0_rgb(0_0_0/0.05)]">
@@ -70,7 +59,7 @@ function RhythmPreviewCard({ match }: { match: FeaturedMatch }) {
             size="pill-sm"
             className="shrink-0"
           >
-            View Profile
+            Browse matches
           </ButtonLink>
         </div>
       </CardContent>

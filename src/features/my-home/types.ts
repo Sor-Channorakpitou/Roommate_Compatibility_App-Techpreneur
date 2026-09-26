@@ -1,49 +1,31 @@
 import type { LucideIcon } from "lucide-react"
 
-export type LivingPreference = {
-  id: string
-  label: string
-  iconName: "moon" | "sparkles" | "users" | "volume-x" | "snowflake" | "calendar"
-}
-
 export type HouseholdResident = {
   id: string
   name: string
-  age: number
-  occupation: string
+  subtitle: string
   isCurrentUser: boolean
-  matchScore?: number
-  avatarInitials: string
-  avatarBg: string
-  avatarTextColor: string
+  /** Invitees haven't joined yet; only the host is a member. */
+  status: "member" | "invited"
+  initials: string
   preferencesHeader: string
-  preferences: LivingPreference[]
+  preferences: string[]
 }
 
+/** Who a chore can be assigned to: the host, an invitee, or everyone. */
 export type ChoreAssignee = {
   id: string
-  name: string
-  shortLabel: string
+  label: string
   initials: string
   badgeBg: string
   textColor: string
-}
-
-export type ChoreItem = {
-  id: string
-  title: string
-  recurrence: string
-  completedNote?: string
-  dueNote?: string
-  assignee: ChoreAssignee
-  isCompleted: boolean
 }
 
 export type HouseRule = {
   id: string
   title: string
   description: string
-  category: "Quiet Hours" | "Guests" | "Cleanliness" | "Shared Spaces"
+  category: string
   icon: LucideIcon
 }
 
@@ -52,7 +34,7 @@ export type ExpenseItem = {
   title: string
   totalAmount: number
   yourShare: number
-  dueDate: string
+  dueNote: string
+  isEstimate: boolean
   status: "Paid" | "Pending"
-  category: "Rent" | "Utilities" | "Internet" | "Household"
 }

@@ -18,10 +18,10 @@ function SiteFooter() {
             <span className="font-heading text-lg font-bold text-primary">
               RoomieMatch
             </span>
-            <p>© 2025 RoomieMatch. Mindfully crafted for harmonious co-living.</p>
+            <p>© {new Date().getFullYear()} RoomieMatch. Mindfully crafted for harmonious co-living.</p>
           </div>
           <nav aria-label="Household legal links" className="flex flex-wrap items-center gap-3 text-xs">
-            <Link to="/house-rules" className="transition-colors hover:text-primary">
+            <Link to="/my-home" className="transition-colors hover:text-primary">
               House Rules
             </Link>
             <span aria-hidden="true">•</span>
@@ -61,7 +61,7 @@ function SiteFooter() {
             <Eyebrow id="footer-quick-links">Quick links</Eyebrow>
             <ul className="mt-3 flex flex-col gap-2">
               {quickLinks.map(({ label, href, icon: Icon }) => (
-                <li key={href}>
+                <li key={label}>
                   <a
                     href={href}
                     className="flex items-center gap-1.5 rounded-sm text-[0.9375rem] leading-[1.55] text-muted-foreground transition-colors outline-none hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"

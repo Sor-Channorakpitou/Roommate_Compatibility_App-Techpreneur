@@ -1,14 +1,14 @@
 import * as React from "react"
-import { Link, useLocation } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import {
   CirclePlus,
   DoorOpen,
   LogIn,
   RotateCw,
   TriangleAlert,
-  type LucideIcon,
 } from "lucide-react"
 
+import { LinkButton, StatePanel } from "@/components/common/state-panel"
 import { Container } from "@/components/layout/container"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/auth-context"
@@ -141,64 +141,6 @@ export function MyRoomsPage() {
         {renderContent()}
       </Container>
     </>
-  )
-}
-
-function LinkButton({
-  to,
-  state,
-  children,
-}: {
-  to: string
-  state?: unknown
-  children: React.ReactNode
-}) {
-  return (
-    <Button
-      nativeButton={false}
-      variant="brand"
-      size="pill-lg"
-      className="text-sm font-semibold shadow-soft"
-      render={<Link to={to} state={state} />}
-    >
-      {children}
-    </Button>
-  )
-}
-
-function StatePanel({
-  icon: Icon,
-  title,
-  description,
-  action,
-  tone = "neutral",
-}: {
-  icon: LucideIcon
-  title: string
-  description: string
-  action?: React.ReactNode
-  tone?: "neutral" | "error"
-}) {
-  return (
-    <div
-      role={tone === "error" ? "alert" : undefined}
-      className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-2xl border border-border/60 bg-card px-6 py-12 text-center shadow-soft"
-    >
-      <span
-        className={
-          tone === "error"
-            ? "flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive"
-            : "flex size-12 items-center justify-center rounded-full bg-peach text-peach-foreground"
-        }
-      >
-        <Icon aria-hidden className="size-5" />
-      </span>
-      <div className="flex flex-col gap-1">
-        <h2 className="font-heading text-2xl text-foreground">{title}</h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      {action}
-    </div>
   )
 }
 

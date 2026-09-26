@@ -1,3 +1,4 @@
+import { PHNOM_PENH_DISTRICTS } from "@/config/districts"
 import type { GuestPolicy, RoomArrangement, RoomDraft, StepId } from "../types"
 
 /** `cta` completes the "Next: …" button that leads into the step. */
@@ -9,15 +10,7 @@ export const WIZARD_STEPS: { id: StepId; label: string; cta: string }[] = [
   { id: "review", label: "Review", cta: "Review & publish" },
 ]
 
-export const PHNOM_PENH_DISTRICTS = [
-  "BKK1, Phnom Penh",
-  "Chamkar Mon, Phnom Penh",
-  "Daun Penh, Phnom Penh",
-  "Russey Keo, Phnom Penh",
-  "Sen Sok, Phnom Penh",
-  "Toul Kork, Phnom Penh",
-  "Toul Tom Poung, Phnom Penh",
-] as const
+export { PHNOM_PENH_DISTRICTS }
 
 /** Host label shown while the creator is not signed in. */
 export const GUEST_HOST_NAME = "You"
@@ -80,17 +73,32 @@ export const HOUSE_HABITS = [
   { label: "Dish washing", value: "Clean after each meal", tone: "positive" },
 ] as const
 
-export const DEFAULT_ROOM_DRAFT: RoomDraft = {
-  name: "Sunflower Sanctuary",
-  district: "Toul Kork, Phnom Penh",
-  street: "St 315, near TK Avenue",
-  monthlyRent: 560,
-  moveInDate: "2025-11-01",
-  leaseEndDate: "2027-10-31",
+/** A short code roommates can use to find the household. */
+function generateJoinCode() {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 4)
+}
+
+/**
+ * A blank room for the host to fill in. Chores and utilities are starter
+ * suggestions the host reviews before publishing.
+ */
+export function createDefaultRoomDraft(): RoomDraft {
+  return {
+    ...DEFAULT_ROOM_DRAFT_TEMPLATE,
+    joinCode: generateJoinCode(),
+  }
+}
+
+const DEFAULT_ROOM_DRAFT_TEMPLATE: Omit<RoomDraft, "joinCode"> = {
+  name: "",
+  district: "",
+  street: "",
+  monthlyRent: null,
+  moveInDate: "",
+  leaseEndDate: "",
   arrangement: "private",
   memberCount: 2,
-  invitees: [{ id: "sokha", name: "Sokha Lim", contact: "@sokha_pp" }],
-  joinCode: "78c9",
+  invitees: [],
   rules: {
     quietHours: { start: "22:00", end: "07:00" },
     guestPolicy: "with-notice",
@@ -109,7 +117,7 @@ export const DEFAULT_ROOM_DRAFT: RoomDraft = {
       id: "trash",
       title: "Recycling & Trash",
       schedule: "Every Tuesday & Friday",
-      assignee: "sokha",
+      assignee: "shared",
     },
     {
       id: "vacuum",

@@ -15,19 +15,17 @@ npm run format     # prettier (incl. Tailwind class sorting)
 
 ## Supabase
 
-This branch uses Supabase Auth for registration/sign-in and stores completed
-compatibility tests in Postgres. It also includes a listings schema and seed data
-derived from `src/features/find-roommates/data/roommates-data.ts`.
+All app data comes from Supabase: auth, profiles, compatibility quiz answers,
+messages (with Realtime), and rooms. There is no mock or localStorage fallback.
 
 1. Create a Supabase project, then copy `.env.example` to `.env.local`.
 2. In **Project Settings → API**, set `VITE_SUPABASE_URL` and the browser-safe
    `VITE_SUPABASE_PUBLISHABLE_KEY`. Never expose a `service_role` or secret key in Vite.
-3. Run `supabase db push` (or paste the migration into the SQL Editor), then run
-   `supabase db reset` locally or execute `supabase/seed.sql`.
+3. Apply everything in `supabase/migrations/` in order: `supabase db push`, or paste
+   each file into the SQL Editor. Every migration is safe to re-run.
 4. In **Authentication → URL Configuration**, add `http://localhost:5173` as a redirect URL.
 
-Until environment values are configured, the app deliberately does not fall back
-to localStorage authentication.
+See [`supabase/README.md`](supabase/README.md) for what each migration sets up.
 
 ## Folder structure
 

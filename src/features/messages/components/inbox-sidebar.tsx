@@ -1,14 +1,18 @@
 import { Search, X } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import type { Conversation } from "@/features/messages/types"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getInitials } from "@/lib/format"
+import type { Conversation } from "@/features/messages/types"
+import { formatInboxTime } from "@/features/messages/lib/format-time"
+
+export type InboxFilter = "all" | "unread"
 
 type InboxSidebarProps = {
   conversations: Conversation[]
   selectedId: string | null
   onSelectConversation: (id: string) => void
-  filterTab: "all" | "unread" | "requests"
-  onFilterChange: (tab: "all" | "unread" | "requests") => void
+  filterTab: InboxFilter
+  onFilterChange: (tab: InboxFilter) => void
   searchQuery: string
   onSearchChange: (query: string) => void
 }
@@ -22,20 +26,15 @@ export function InboxSidebar({
   searchQuery,
   onSearchChange,
 }: InboxSidebarProps) {
-  const activeCount = conversations.filter((c) => c.unread).length
+  const unreadCount = conversations.filter((c) => c.unreadCount > 0).length
+  const query = searchQuery.toLowerCase().trim()
 
   const filteredConversations = conversations.filter((c) => {
-    const matchesTab =
-      filterTab === "all"
-        ? true
-        : filterTab === "unread"
-        ? c.unread
-        : c.isRoomRequest
-    const matchesSearch =
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.lastMessageText.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesTab && matchesSearch
+    if (filterTab === "unread" && c.unreadCount === 0) return false
+    if (!query) return true
+    return [c.partner?.name, c.partner?.university, c.messages.at(-1)?.text].some(
+      (text) => text?.toLowerCase().includes(query)
+    )
   })
 
   return (
@@ -51,7 +50,9 @@ export function InboxSidebar({
             Inbox
           </h1>
           <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-            {activeCount > 0 ? `${activeCount} unread` : `${conversations.length} active`}
+            {unreadCount > 0
+              ? `${unreadCount} unread`
+              : `${conversations.length} ${conversations.length === 1 ? "chat" : "chats"}`}
           </span>
         </div>
       </div>
@@ -62,6 +63,7 @@ export function InboxSidebar({
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
+            aria-label="Search conversations"
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -70,6 +72,7 @@ export function InboxSidebar({
           {searchQuery && (
             <button
               type="button"
+              aria-label="Clear search"
               onClick={() => onSearchChange("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
@@ -85,12 +88,12 @@ export function InboxSidebar({
           [
             { id: "all", label: "All" },
             { id: "unread", label: "Unread" },
-            { id: "requests", label: "Room Requests" },
           ] as const
         ).map((tab) => (
           <button
             key={tab.id}
             type="button"
+            aria-pressed={filterTab === tab.id}
             onClick={() => onFilterChange(tab.id)}
             className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
               filterTab === tab.id
@@ -107,68 +110,74 @@ export function InboxSidebar({
       <div className="flex-1 overflow-y-auto p-2">
         {filteredConversations.length === 0 ? (
           <div className="p-8 text-center text-xs text-muted-foreground">
-            No conversations found.
+            {conversations.length === 0
+              ? "No conversations yet. Find a roommate on Browse and say hello."
+              : "No conversations found."}
           </div>
         ) : (
           filteredConversations.map((conv) => {
-            const isSelected = selectedId === conv.id
+            const isSelected = selectedId === conv.partnerId
+            const name = conv.partner?.name ?? "RoomieMatch member"
+            const last = conv.messages.at(-1)
+            const isUnread = conv.unreadCount > 0
             return (
               <button
-                key={conv.id}
+                key={conv.partnerId}
                 type="button"
-                onClick={() => onSelectConversation(conv.id)}
+                onClick={() => onSelectConversation(conv.partnerId)}
                 className={`group relative flex w-full items-start gap-3 rounded-xl p-3 text-left transition-all ${
                   isSelected
                     ? "bg-[#f2ece4] dark:bg-muted/80 shadow-xs ring-1 ring-primary/20"
                     : "hover:bg-muted/60"
                 }`}
               >
-                {/* Avatar */}
                 <div className="relative shrink-0">
                   <Avatar className="size-11 border border-border/40">
-                    <AvatarFallback className={`text-xs font-bold ${conv.avatarBg}`}>
-                      {conv.initials}
+                    {conv.partner?.avatar_url && (
+                      <AvatarImage src={conv.partner.avatar_url} alt="" />
+                    )}
+                    <AvatarFallback className="bg-[#e8d8c8] text-xs font-bold text-[#522b12]">
+                      {getInitials(name)}
                     </AvatarFallback>
                   </Avatar>
-                  {conv.unread && (
+                  {isUnread && (
                     <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card bg-emerald-500" />
                   )}
                 </div>
 
-                {/* Details */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
                     <h2 className="truncate text-xs font-bold text-foreground">
-                      {conv.name}
+                      {name}
                     </h2>
-                    <span className="shrink-0 text-[0.6875rem] text-muted-foreground">
-                      {conv.lastMessageTime}
-                    </span>
+                    {last && (
+                      <span className="shrink-0 text-[0.6875rem] text-muted-foreground">
+                        {formatInboxTime(last.createdAt)}
+                      </span>
+                    )}
                   </div>
 
                   <p
                     className={`mt-0.5 truncate text-[0.75rem] ${
-                      conv.unread
-                        ? "font-semibold text-foreground"
-                        : "text-muted-foreground"
+                      isUnread ? "font-semibold text-foreground" : "text-muted-foreground"
                     }`}
                   >
-                    {conv.lastMessageText}
+                    {last
+                      ? `${last.fromMe ? "You: " : ""}${last.text}`
+                      : "New conversation"}
                   </p>
 
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    {conv.isRoomRequest ? (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.6875rem] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                        Request
-                      </span>
-                    ) : (
+                    {conv.match && (
                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[0.6875rem] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                        {conv.isRealMatch ? "Mutual interest" : `${conv.matchScore}% match`}
+                        {conv.match.score}% match
                       </span>
                     )}
-                    <span className="text-[0.6875rem] text-muted-foreground">
-                      {conv.location}
-                    </span>
+                    {conv.partner?.university && (
+                      <span className="truncate text-[0.6875rem] text-muted-foreground">
+                        {conv.partner.university}
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>

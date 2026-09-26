@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { ArrowLeft, ArrowRight, Moon, Sparkles, Zap } from "lucide-react"
 
@@ -7,10 +7,17 @@ import { Eyebrow } from "@/components/common/eyebrow"
 import { Container } from "@/components/layout/container"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/auth-context"
-import { getSupabase, isSupabaseConfigured } from "@/lib/supabase"
+import { getErrorMessage, isUnauthenticatedError } from "@/lib/api-error"
+import {
+  hasCompletedQuiz,
+  parseAnswers,
+  type CompatibilityAnswers,
+  type HabitKey,
+} from "@/lib/compatibility"
+import { getMyAnswers, saveMyAnswers } from "@/lib/students-api"
 
 // ---------------------------------------------------------------------------
-// Quiz data (sample questions matching the screenshot aesthetic)
+// Quiz content. Option ids must match `HABITS` in @/lib/compatibility.
 // ---------------------------------------------------------------------------
 
 type QuizOption = {
@@ -27,15 +34,13 @@ type SubOption = {
 }
 
 type QuizQuestion = {
-  step: number
-  totalSteps: number
+  key: HabitKey
   category: string
-  questionNumber: number
-  totalQuestions: number
   title: string
   subtitle: string
   options: QuizOption[]
   subGroup?: {
+    key: HabitKey
     label: string
     labelRight?: string
     options: SubOption[]
@@ -44,11 +49,8 @@ type QuizQuestion = {
 
 const QUESTIONS: QuizQuestion[] = [
   {
-    step: 2,
-    totalSteps: 8,
+    key: "sleep",
     category: "Sleep Schedule",
-    questionNumber: 1,
-    totalQuestions: 8,
     title: "When do your lights usually go out on weekdays?",
     subtitle:
       "Select the schedule that best reflects your natural daily rhythm.",
@@ -79,6 +81,7 @@ const QUESTIONS: QuizQuestion[] = [
       },
     ],
     subGroup: {
+      key: "weekend",
       label: "Weekend mornings",
       labelRight: "Desired atmosphere",
       options: [
@@ -89,11 +92,8 @@ const QUESTIONS: QuizQuestion[] = [
     },
   },
   {
-    step: 3,
-    totalSteps: 8,
+    key: "cleanliness",
     category: "Cleanliness",
-    questionNumber: 2,
-    totalQuestions: 8,
     title: "How would you describe your cleaning habits?",
     subtitle: "Be honest — there are no wrong answers, only compatible ones.",
     options: [
@@ -124,11 +124,8 @@ const QUESTIONS: QuizQuestion[] = [
     ],
   },
   {
-    step: 4,
-    totalSteps: 8,
+    key: "noise",
     category: "Noise & Social",
-    questionNumber: 3,
-    totalQuestions: 8,
     title: "What's your ideal noise level at home?",
     subtitle: "Think about a typical weekday evening in your shared space.",
     options: [
@@ -164,62 +161,128 @@ const QUESTIONS: QuizQuestion[] = [
 // Component
 // ---------------------------------------------------------------------------
 
+/** Keeps answers across the sign-in round trip for visitors who start signed out. */
+const PROGRESS_KEY = "roomiematch:quiz-progress"
+
+function readProgress(): CompatibilityAnswers {
+  try {
+    return parseAnswers(JSON.parse(sessionStorage.getItem(PROGRESS_KEY) ?? "{}"))
+  } catch {
+    return {}
+  }
+}
+
+function writeProgress(answers: CompatibilityAnswers) {
+  try {
+    sessionStorage.setItem(PROGRESS_KEY, JSON.stringify(answers))
+  } catch {
+    // Storage can be blocked; the quiz still works in memory.
+  }
+}
+
+function clearProgress() {
+  try {
+    sessionStorage.removeItem(PROGRESS_KEY)
+  } catch {
+    // Nothing to clear.
+  }
+}
+
 function CompatibilityPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
-  const [currentIndex, setCurrentIndex] = React.useState(0)
-  const [selections, setSelections] = React.useState<Record<number, string>>({})
-  const [subSelections, setSubSelections] = React.useState<
-    Record<number, string>
-  >({})
+  const [answers, setAnswers] = React.useState<CompatibilityAnswers>(readProgress)
+  // Back from signing in with every answer given: pick up at the finish.
+  const [currentIndex, setCurrentIndex] = React.useState(() =>
+    hasCompletedQuiz(answers) ? QUESTIONS.length - 1 : 0
+  )
+  const [isSaving, setIsSaving] = React.useState(false)
+
+  // Retakes start from the answers already on file, unless some are in progress.
+  React.useEffect(() => {
+    if (!user) return
+    let isCurrent = true
+    getMyAnswers()
+      .then((saved) => {
+        if (!isCurrent) return
+        setAnswers((current) =>
+          Object.keys(current).length > 0 ? current : saved
+        )
+      })
+      .catch(() => {
+        // No saved answers to prefill; the quiz starts blank.
+      })
+    return () => {
+      isCurrent = false
+    }
+  }, [user])
+
+  React.useEffect(() => {
+    document.title = "Compatibility test | RoomieMatch"
+  }, [])
 
   const question = QUESTIONS[currentIndex]
-  const selectedOption = selections[currentIndex] ?? ""
-  const selectedSub = subSelections[currentIndex] ?? ""
+  const selectedOption = answers[question.key] ?? ""
+  const selectedSub = question.subGroup ? (answers[question.subGroup.key] ?? "") : ""
 
   // User must select both main option and sub-option if sub-group exists
   const isStepComplete =
     Boolean(selectedOption) && (!question.subGroup || Boolean(selectedSub))
   const isLastStep = currentIndex === QUESTIONS.length - 1
 
+  function setAnswer(key: HabitKey, optionId: string) {
+    setAnswers((prev) => {
+      const next = { ...prev, [key]: optionId }
+      writeProgress(next)
+      return next
+    })
+  }
+
   function handleSelect(optionId: string) {
-    setSelections((prev) => ({ ...prev, [currentIndex]: optionId }))
+    setAnswer(question.key, optionId)
   }
 
   function handleSubSelect(subId: string) {
-    setSubSelections((prev) => ({ ...prev, [currentIndex]: subId }))
+    if (question.subGroup) setAnswer(question.subGroup.key, subId)
+  }
+
+  function goToSignIn() {
+    toast.error("Sign in to save your answers", {
+      description: "Your answers are kept. You'll come right back here.",
+    })
+    navigate("/sign-in", { state: { from: location.pathname } })
   }
 
   async function handleNext() {
-    if (!isStepComplete) return
+    if (!isStepComplete || isSaving) return
 
-    if (isLastStep) {
-      if (!user) {
-        toast.error("Please sign in first", { description: "Your compatibility answers are saved to your Supabase account." })
-        navigate("/sign-in")
-        return
-      }
-      if (!isSupabaseConfigured) {
-        toast.error("Supabase is not configured", { description: "Add the environment variables in .env.local before saving answers." })
-        return
-      }
-      const responses = QUESTIONS.map((item, index) => ({
-        category: item.category,
-        answer: item.options.find((option) => option.id === selections[index])?.label || selections[index],
-        subAnswer: item.subGroup?.options.find((option) => option.id === subSelections[index])?.label || null,
-      }))
-      const { error } = await getSupabase().from("compatibility_responses").insert({ user_id: user.id, responses })
-      if (error) {
-        toast.error("Could not save your answers", { description: error.message })
-        return
-      }
-      toast.success("Compatibility test completed!", {
-        description:
-          "Your preferences have been saved. Directing to home page...",
-      })
-      navigate("/profile#preferences")
-    } else {
+    if (!isLastStep) {
       setCurrentIndex((i) => i + 1)
+      return
+    }
+    if (!hasCompletedQuiz(answers)) return
+    if (!user) {
+      goToSignIn()
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      await saveMyAnswers(answers)
+      clearProgress()
+      toast.success("Compatibility test completed!", {
+        description: "Your match scores are ready.",
+      })
+      navigate("/browse")
+    } catch (error) {
+      if (isUnauthenticatedError(error)) goToSignIn()
+      else {
+        toast.error("Could not save your answers", {
+          description: getErrorMessage(error),
+        })
+      }
+      setIsSaving(false)
     }
   }
 
@@ -236,14 +299,14 @@ function CompatibilityPage() {
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Eyebrow className="text-primary">
-              Step {question.step} of {question.totalSteps}
+              Step {currentIndex + 1} of {QUESTIONS.length}
             </Eyebrow>
             <span className="border-l border-primary/30 pl-3 text-sm font-semibold text-primary underline decoration-primary underline-offset-4">
               {question.category}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Question {question.questionNumber} of {question.totalQuestions}
+            {user ? "Answers save to your profile" : "Sign in at the end to save"}
           </p>
         </div>
 
@@ -389,10 +452,10 @@ function CompatibilityPage() {
           <Button
             size="pill-lg"
             onClick={handleNext}
-            disabled={!isStepComplete}
+            disabled={!isStepComplete || isSaving}
             className="shadow-floating"
           >
-            {isLastStep ? "Finish Test" : "Next Question"}
+            {isLastStep ? (isSaving ? "Saving…" : "Finish Test") : "Next Question"}
             <ArrowRight className="size-3" />
           </Button>
         </div>

@@ -1,73 +1,43 @@
-﻿import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 import { cookieStorage, clearAuthTokensFromLocalStorage } from "./cookie-storage"
 
 export type Profile = {
   id: string
+  /** Not readable through the API: the column is revoked for anon and authenticated. */
   email: string
   name: string
   university: string
   gender: string
+  bio: string | null
+  avatar_url: string | null
   created_at: string
-  housing_preferences: Record<string, unknown> | null
+  updated_at: string
 }
 
+/** Readable profile columns; see `PUBLIC_PROFILE_COLUMNS`. */
+export type PublicProfile = Omit<Profile, "email">
+
+export const PUBLIC_PROFILE_COLUMNS =
+  "id, name, university, gender, bio, avatar_url, created_at, updated_at"
+
 export type CompatibilityResponse = {
-  id: number
+  id: string
   user_id: string
-  responses: Array<Record<string, unknown>>
-  completed_at: string
+  /** Quiz answers keyed by habit, see `CompatibilityAnswers` in `@/lib/compatibility`. */
+  answers: Record<string, string>
+  sleep_schedule: string | null
+  cleanliness_score: number | null
+  social_habit: string | null
+  study_preference: string | null
+  updated_at: string
 }
 
 export type Message = {
-  id: string | number
-  interest_id: string
+  id: string
   sender_id: string
   receiver_id: string
   content: string
   read: boolean
-  created_at: string
-}
-
-export type ListingRow = {
-  id: string
-  type: "roommate" | "place" | "has_room"
-  badge_label: string
-  name: string
-  age: number | null
-  match_score: number | null
-  price_min: number
-  price_max: number
-  subtitle: string
-  location: string
-  available_date: string
-  quote: string
-  tags: string[]
-  housing_type: string
-  area_category: string
-  lifestyle_rhythms: string[]
-  move_in_horizon: string
-  bio: string | null
-  habit_comparisons: Array<Record<string, unknown>>
-  breakdown: Array<Record<string, unknown>>
-  owner_id: string | null
-  owner_name: string | null
-  is_published: boolean
-  created_at: string
-}
-
-export type ListingInterest = {
-  id: string
-  listing_id: string
-  interested_user_id: string
-  owner_id: string
-  interested_name: string
-  owner_name: string
-  listing_name: string
-  listing_location: string
-  price_min: number
-  price_max: number
-  available_date: string
-  status: "pending" | "accepted" | "declined"
   created_at: string
 }
 
@@ -91,6 +61,25 @@ export type Room = {
   updated_at: string
 }
 
+/** A listing-safe view of a room, from the `list_open_rooms()` function. */
+export type OpenRoom = {
+  id: string
+  owner_id: string
+  owner_name: string | null
+  name: string
+  district: string
+  monthly_rent: number
+  move_in_date: string
+  lease_end_date: string
+  arrangement: RoomArrangement
+  member_count: number
+  open_spots: number
+  guest_policy: string | null
+  quiet_hours_start: string | null
+  quiet_hours_end: string | null
+  created_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -102,8 +91,10 @@ export type Database = {
           name: string
           university?: string
           gender?: string
+          bio?: string | null
+          avatar_url?: string | null
           created_at?: string
-          housing_preferences?: Record<string, unknown> | null
+          updated_at?: string
         }
         Update: Partial<{
           id: string
@@ -111,62 +102,31 @@ export type Database = {
           name: string
           university: string
           gender: string
-          housing_preferences: Record<string, unknown> | null
+          bio: string | null
+          avatar_url: string | null
+          updated_at: string
         }>
         Relationships: []
       }
       compatibility_responses: {
         Row: CompatibilityResponse
         Insert: {
-          id?: number
+          id?: string
           user_id: string
-          responses: Array<Record<string, unknown>>
-          completed_at?: string
+          answers: Record<string, string>
+          sleep_schedule?: string | null
+          cleanliness_score?: number | null
+          social_habit?: string | null
+          study_preference?: string | null
+          updated_at?: string
         }
-        Update: Partial<{
-          id: number
-          user_id: string
-          responses: Array<Record<string, unknown>>
-          completed_at: string
-        }>
-        Relationships: []
-      }
-      roommate_listings: {
-        Row: ListingRow
-        Insert: {
-          id: string
-          type: ListingRow["type"]
-          badge_label: string
-          name: string
-          age?: number | null
-          match_score?: number | null
-          price_min: number
-          price_max: number
-          subtitle: string
-          location: string
-          available_date: string
-          quote: string
-          tags?: string[]
-          housing_type: string
-          area_category: string
-          lifestyle_rhythms?: string[]
-          move_in_horizon: string
-          bio?: string | null
-          habit_comparisons?: Array<Record<string, unknown>>
-          breakdown?: Array<Record<string, unknown>>
-          owner_id: string
-          owner_name?: string | null
-          is_published?: boolean
-          created_at?: string
-        }
-        Update: Partial<Omit<ListingRow, "id" | "created_at">>
+        Update: Partial<Omit<CompatibilityResponse, "id" | "user_id">>
         Relationships: []
       }
       messages: {
         Row: Message
         Insert: {
-          id?: string | number
-          interest_id: string
+          id?: string
           sender_id: string
           receiver_id: string
           content: string
@@ -174,20 +134,13 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<{
-          id: string | number
-          interest_id: string
+          id: string
           sender_id: string
           receiver_id: string
           content: string
           read: boolean
           created_at: string
         }>
-        Relationships: []
-      }
-      listing_interests: {
-        Row: ListingInterest
-        Insert: Omit<ListingInterest, "id" | "created_at" | "status"> & { id?: string; created_at?: string; status?: ListingInterest["status"] }
-        Update: Partial<ListingInterest>
         Relationships: []
       }
       rooms: {
@@ -215,9 +168,9 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
-      get_listing_compatibility_scores: {
-        Args: Record<PropertyKey, never>
-        Returns: Array<{ listing_id: string; match_score: number }>
+      list_open_rooms: {
+        Args: Record<string, never>
+        Returns: OpenRoom[]
       }
     }
   }

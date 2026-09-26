@@ -1,262 +1,85 @@
 import React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   ArrowRight,
-  Check,
   Filter,
   Grid,
   Home,
   RotateCcw,
+  RotateCw,
   Search,
-  ShieldCheck,
   Shuffle,
+  Sparkles,
+  TriangleAlert,
   Users,
 } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "cn"
 
+import { StatePanel } from "@/components/common/state-panel"
 import { Container } from "@/components/layout/container"
+import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/auth-context"
 import {
-  ROOMMATES_LISTINGS,
+  DEFAULT_FILTERS,
+  filterListings,
   type FilterState,
   type RoommateListing,
-} from "../data/roommates-data"
+} from "../data/listings"
+import { useBrowseListings } from "../hooks/use-browse-listings"
 import { FilterSidebar } from "./filter-sidebar"
 import { RoommateCard } from "./roommate-card"
 import { ViewDetailDialog } from "./view-detail-dialog"
-import { isSupabaseConfigured, supabase, type ListingRow } from "@/lib/supabase"
-import { useAuth } from "@/context/auth-context"
-
-function toRoommateListing(row: ListingRow, compatibilityScore?: number): RoommateListing {
-  return {
-    id: row.id,
-    type: row.type,
-    badgeLabel: row.badge_label,
-    name: row.name,
-    age: row.age ?? undefined,
-    // Scores for user listings come only from the private-answer RPC below.
-    matchScore: row.owner_id ? compatibilityScore : row.match_score ?? undefined,
-    priceDisplay: `$${row.price_min}–${row.price_max}/mo`,
-    priceMin: row.price_min,
-    priceMax: row.price_max,
-    subtitle: row.subtitle,
-    location: row.location,
-    availableDate: row.available_date,
-    quote: row.quote,
-    tags: row.tags || [],
-    image: undefined,
-    housingType: row.housing_type as RoommateListing["housingType"],
-    areaCategory: row.area_category as RoommateListing["areaCategory"],
-    lifestyleRhythms: row.lifestyle_rhythms || [],
-    moveInHorizon: row.move_in_horizon as RoommateListing["moveInHorizon"],
-    habitComparisons: row.habit_comparisons as RoommateListing["habitComparisons"],
-    breakdown: row.breakdown as RoommateListing["breakdown"],
-    bio: row.bio || undefined,
-    ownerId: row.owner_id || undefined,
-    ownerName: row.owner_name || undefined,
-  }
-}
 
 export function FindRoommatesPage() {
-  const { user } = useAuth()
   const navigate = useNavigate()
-  const [listings, setListings] = React.useState(ROOMMATES_LISTINGS)
-  const [requestedListingIds, setRequestedListingIds] = React.useState<Set<string>>(new Set())
-  const [filters, setFilters] = React.useState<FilterState>({
-    categoryTab: "roommates",
-    searchQuery: "",
-    sortBy: "best-match",
-    housingType: "all",
-    area: "all",
-    budgetRange: "any",
-    lifestyleRhythms: ["early-bird", "quiet-hours", "non-smoker"],
-    moveInHorizon: "next-30-days",
-  })
+  const location = useLocation()
+  const { user, isLoading: isAuthLoading } = useAuth()
+  const { state, reload, viewerTookQuiz } = useBrowseListings(
+    user?.id,
+    !isAuthLoading
+  )
 
+  const [filters, setFilters] = React.useState<FilterState>(DEFAULT_FILTERS)
   const [selectedProfile, setSelectedProfile] =
     React.useState<RoommateListing | null>(null)
-  const [toastMessage, setToastMessage] = React.useState<string | null>(null)
   const [isMobileFilterOpen, setIsMobileFilterOpen] = React.useState(false)
 
   React.useEffect(() => {
-    if (!isSupabaseConfigured) return
-    let active = true
-    async function loadListings() {
-      const [{ data, error }, interestResult] = await Promise.all([
-        supabase.from("roommate_listings").select("*").eq("is_published", true).order("created_at", { ascending: false }),
-        user ? supabase.from("listing_interests").select("listing_id").eq("interested_user_id", user.id) : Promise.resolve({ data: [], error: null }),
-      ])
-      if (!active) return
-      if (error) return
-      const scoreResult = user
-        ? await supabase.rpc("get_listing_compatibility_scores")
-        : { data: [], error: null }
-      if (!active) return
-      const compatibilityScores = new Map(
-        (scoreResult.data || []).map((score) => [score.listing_id, score.match_score]),
-      )
-      const requested = new Set((interestResult.data || []).map((interest) => interest.listing_id))
-      setRequestedListingIds(requested)
-      const combined = [
-        ...(data || []).map((row) => toRoommateListing(row, compatibilityScores.get(row.id))),
-        ...ROOMMATES_LISTINGS,
-      ]
-      setListings([...new Map(combined.map((listing) => [listing.id, { ...listing, connected: requested.has(listing.id) }])).values()])
-    }
-    void loadListings()
-    return () => { active = false }
-  }, [user])
+    document.title = "Browse roommates & rooms | RoomieMatch"
+  }, [])
 
-  // Clear toast after 4 seconds
-  React.useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => setToastMessage(null), 4000)
-      return () => clearTimeout(timer)
-    }
-  }, [toastMessage])
+  const handleClearAllFilters = () => setFilters(DEFAULT_FILTERS)
 
-  const handleClearAllFilters = () => {
-    setFilters({
-      categoryTab: "all",
-      searchQuery: "",
-      sortBy: "best-match",
-      housingType: "all",
-      area: "all",
-      budgetRange: "any",
-      lifestyleRhythms: [],
-      moveInHorizon: "anytime",
-    })
-  }
+  const listings = React.useMemo(
+    () => (state.status === "ready" ? state.listings : []),
+    [state]
+  )
+  const filteredListings = React.useMemo(
+    () => filterListings(listings, filters),
+    [listings, filters]
+  )
 
-  // Filter listings
-  const filteredListings = React.useMemo(() => {
-    return listings.filter((item) => {
-      // Category scope tab
-      if (filters.categoryTab === "roommates") {
-        if (item.type !== "roommate" && item.type !== "has_room") return false
-      } else if (filters.categoryTab === "places") {
-        if (item.type !== "place") return false
-      }
-
-      // Search query filter (matches name, location, tags, subtitle, quote)
-      if (filters.searchQuery.trim()) {
-        const q = filters.searchQuery.toLowerCase().trim()
-        const matchName = item.name.toLowerCase().includes(q)
-        const matchLoc = item.location.toLowerCase().includes(q)
-        const matchSub = item.subtitle.toLowerCase().includes(q)
-        const matchTags = item.tags.some((t) => t.toLowerCase().includes(q))
-        const matchQuote = item.quote.toLowerCase().includes(q)
-        if (!matchName && !matchLoc && !matchSub && !matchTags && !matchQuote) {
-          return false
-        }
-      }
-
-      // Housing type filter
-      if (filters.housingType !== "all" && item.housingType !== filters.housingType) {
-        return false
-      }
-
-      // Area filter
-      if (filters.area !== "all" && item.areaCategory !== filters.area) {
-        return false
-      }
-
-      // Budget filter
-      if (filters.budgetRange === "under-250" && item.priceMin >= 250) {
-        return false
-      }
-      if (
-        filters.budgetRange === "250-400" &&
-        (item.priceMax < 250 || item.priceMin > 400)
-      ) {
-        return false
-      }
-      if (filters.budgetRange === "400-plus" && item.priceMax < 400) {
-        return false
-      }
-
-      // Lifestyle rhythms (if any checked, must have at least one or all match)
-      if (filters.lifestyleRhythms.length > 0) {
-        const hasLifestyle = filters.lifestyleRhythms.some((lr) =>
-          item.lifestyleRhythms.includes(lr)
-        )
-        if (!hasLifestyle) return false
-      }
-
-      return true
-    }).sort((a, b) => {
-      if (filters.sortBy === "best-match") {
-        return (b.matchScore ?? 0) - (a.matchScore ?? 0)
-      }
-      if (filters.sortBy === "budget") {
-        return a.priceMin - b.priceMin
-      }
-      // move-in sort
-      return a.availableDate.localeCompare(b.availableDate)
-    })
-  }, [filters, listings])
-
-  const handleSendMatch = async (profile: RoommateListing): Promise<boolean> => {
+  // Opens (or starts) a real conversation with the student or room host.
+  const handleSendMatch = (profile: RoommateListing) => {
+    const params = new URLSearchParams({ to: profile.contactId })
+    if (profile.room) params.set("about", profile.room.name)
+    const target = `/messages?${params}`
     if (!user) {
-      navigate("/sign-in")
-      return false
+      toast.error("Sign in to send a message")
+      navigate("/sign-in", { state: { from: target } })
+      return
     }
-    if (!isSupabaseConfigured) {
-      setToastMessage("Connect Supabase to send a real interest request.")
-      return false
-    }
-    if (!profile.ownerId) {
-      setToastMessage("This sample listing can’t receive requests yet.")
-      return false
-    }
-    if (profile.ownerId === user.id) {
-      setToastMessage("This is your own listing.")
-      return false
-    }
-    if (requestedListingIds.has(profile.id)) {
-      setToastMessage("You already sent an interest request for this listing.")
-      return false
-    }
-
-    const { error } = await supabase.from("listing_interests").insert({
-      listing_id: profile.id,
-      interested_user_id: user.id,
-      owner_id: profile.ownerId,
-      interested_name: user.name,
-      owner_name: profile.ownerName || profile.name,
-      listing_name: profile.name,
-      listing_location: profile.location,
-      price_min: profile.priceMin,
-      price_max: profile.priceMax,
-      available_date: profile.availableDate,
-    })
-    if (error) {
-      setToastMessage(error.code === "23505" ? "You already sent an interest request for this listing." : error.message)
-      return false
-    }
-    setRequestedListingIds((current) => new Set(current).add(profile.id))
-    setListings((current) => current.map((listing) => listing.id === profile.id ? { ...listing, connected: true } : listing))
-    setToastMessage("Interest sent! We’ll let you know when the owner responds.")
-    return true
+    navigate(target)
   }
 
-  // Count tallies for top switcher tabs
+  const roommatesCount = listings.filter((l) => l.type === "student").length
+  const placesCount = listings.filter((l) => l.type === "place").length
   const totalMatchesCount = listings.length
-  const roommatesCount = listings.filter((listing) => listing.type !== "place").length
-  const placesCount = listings.filter((listing) => listing.type === "place").length
 
   return (
     <div className="min-h-screen bg-[#faf8f4] dark:bg-background text-foreground pb-20 pt-6">
       <Container className="space-y-6">
-        {/* Toast Notification */}
-        {toastMessage && (
-          <div className="fixed top-24 right-6 z-50 flex items-center gap-3 rounded-2xl bg-[#5c2005] px-5 py-3.5 text-white shadow-xl animate-in slide-in-from-top-4 duration-300">
-            <div className="flex size-7 items-center justify-center rounded-full bg-white/20">
-              <Check className="size-4 stroke-[2.5]" />
-            </div>
-            <span className="text-sm font-medium">{toastMessage}</span>
-          </div>
-        )}
-
         {/* Top Category Switcher Tabs matching Browse.png */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* All Matches Pill */}
@@ -346,7 +169,7 @@ export function FindRoommatesPage() {
               onChange={(e) =>
                 setFilters({ ...filters, searchQuery: e.target.value })
               }
-              placeholder="Search by neighborhood, hobby, or rhythm (e.g. Daun Penh, Early bird, Cat-)"
+              placeholder="Search by name, university, district, or rhythm (e.g. Toul Kork, Early bird)"
               className="w-full rounded-full border border-[#ded4c6] dark:border-stone-800 bg-white dark:bg-card py-2.5 pl-11 pr-5 text-xs sm:text-sm text-foreground placeholder:text-[#9e9285] focus:border-[#5c2005] focus:outline-none focus:ring-1 focus:ring-[#5c2005]"
             />
           </div>
@@ -434,28 +257,67 @@ export function FindRoommatesPage() {
 
           {/* Right Main Column (approx 9 cols) */}
           <div className="lg:col-span-9 space-y-5">
-            {/* Subtitle Bar matching Browse.png */}
-            <div className="flex items-center justify-between border-b border-[#ece4d8] dark:border-stone-800 pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ece4d8] dark:border-stone-800 pb-3">
               <p className="text-xs sm:text-sm font-semibold text-[#322b22] dark:text-stone-200">
-                Showing verified matches{" "}
+                {state.status === "ready"
+                  ? `Showing ${filteredListings.length} of ${totalMatchesCount}`
+                  : "Loading listings…"}{" "}
                 <span className="font-normal text-[#756a5c] dark:text-stone-400">
-                  • Updated today
+                  • Live from RoomieMatch members
                 </span>
               </p>
-
-              <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-[#225c27] dark:text-emerald-400 uppercase">
-                <ShieldCheck className="size-4 shrink-0" />
-                <span>HARMONY VERIFIED PROFILES</span>
-              </div>
             </div>
 
-            {/* Cards Grid (3 Columns) matching Browse.png */}
-            {filteredListings.length > 0 ? (
+            {state.status === "ready" && !viewerTookQuiz && (
+              <div className="flex flex-col gap-3 rounded-2xl border border-[#e8dfd2] bg-[#fdf8f1] p-4 text-xs text-[#544d44] sm:flex-row sm:items-center sm:justify-between dark:border-stone-800 dark:bg-stone-900/50 dark:text-stone-300">
+                <p className="flex items-center gap-2">
+                  <Sparkles className="size-4 shrink-0 text-[#682506]" />
+                  {user
+                    ? "Take the compatibility quiz to see your match score with each student."
+                    : "Sign in and take the compatibility quiz to see match scores."}
+                </p>
+                <Link
+                  to={user ? "/compatibility-test" : "/sign-in"}
+                  state={user ? undefined : { from: location.pathname }}
+                  className="shrink-0 font-semibold text-[#5c2005] underline underline-offset-2"
+                >
+                  {user ? "Take the quiz" : "Sign in"}
+                </Link>
+              </div>
+            )}
+
+            {state.status === "loading" ? (
+              <div
+                role="status"
+                aria-label="Loading listings"
+                className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+              >
+                {[0, 1, 2].map((key) => (
+                  <div
+                    key={key}
+                    className="h-80 animate-pulse rounded-[22px] border border-[#e8dfd2] bg-white dark:bg-card"
+                  />
+                ))}
+              </div>
+            ) : state.status === "error" ? (
+              <StatePanel
+                icon={TriangleAlert}
+                tone="error"
+                title="We couldn't load listings"
+                description={state.message}
+                action={
+                  <Button type="button" variant="outline" size="pill-lg" onClick={reload}>
+                    <RotateCw />
+                    Try again
+                  </Button>
+                }
+              />
+            ) : filteredListings.length > 0 ? (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {filteredListings.map((listing) => (
                   <RoommateCard
                     key={listing.id}
-                    profile={{ ...listing, connected: listing.connected || requestedListingIds.has(listing.id) }}
+                    profile={listing}
                     onSeeBreakdown={setSelectedProfile}
                     onSendMatch={handleSendMatch}
                   />
@@ -468,19 +330,27 @@ export function FindRoommatesPage() {
                   <Search className="size-6" />
                 </div>
                 <h3 className="font-roboto-slab text-xl font-medium text-foreground">
-                  No matches found for your filter criteria
+                  {totalMatchesCount === 0
+                    ? "No listings yet"
+                    : "No matches found for your filter criteria"}
                 </h3>
                 <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                  Try adjusting your budget, neighborhoods, or lifestyle rhythms to discover more potential roommates.
+                  {filters.categoryTab === "places" && !state.roomsAvailable
+                    ? "Room listings need the latest database migration (supabase/migrations/20260927000000_public_room_listings.sql)."
+                    : totalMatchesCount === 0
+                      ? "Be the first: create a room or invite classmates to sign up."
+                      : "Try adjusting your budget, neighborhoods, or lifestyle rhythms to discover more potential roommates."}
                 </p>
-                <button
-                  type="button"
-                  onClick={handleClearAllFilters}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#ded4c6] bg-white px-5 py-2 text-xs font-semibold text-[#5c2005] hover:bg-[#f8f4ee]"
-                >
-                  <RotateCcw className="size-3.5" />
-                  Reset all filters
-                </button>
+                {totalMatchesCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAllFilters}
+                    className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#ded4c6] bg-white px-5 py-2 text-xs font-semibold text-[#5c2005] hover:bg-[#f8f4ee]"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    Reset all filters
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -510,7 +380,7 @@ export function FindRoommatesPage() {
             </div>
 
             <Link
-              to="/my-home"
+              to="/rooms/new"
               className="inline-flex items-center gap-2 rounded-full bg-[#5c2005] hover:bg-[#481903] active:scale-98 px-6 py-3 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all shrink-0 self-start sm:self-center"
             >
               <span>List or Create a Room</span>
@@ -571,6 +441,7 @@ export function FindRoommatesPage() {
       {/* View Detail Modal matching view_detail.png */}
       <ViewDetailDialog
         profile={selectedProfile}
+        viewerTookQuiz={viewerTookQuiz}
         onClose={() => setSelectedProfile(null)}
         onSendMatch={handleSendMatch}
       />

@@ -1,14 +1,31 @@
+import type * as React from "react"
 import { Check, SlidersHorizontal } from "lucide-react"
 import { cn } from "cn"
 
+import { PHNOM_PENH_DISTRICTS } from "@/config/districts"
 import {
-  AREA_OPTIONS,
   BUDGET_OPTIONS,
   HOUSING_TYPE_OPTIONS,
   LIFESTYLE_OPTIONS,
   MOVE_IN_OPTIONS,
   type FilterState,
-} from "../data/roommates-data"
+} from "../data/listings"
+
+const AREA_OPTIONS = [
+  { id: "all", label: "All Phnom Penh areas" },
+  ...PHNOM_PENH_DISTRICTS.map((district) => ({
+    id: district,
+    label: district.replace(", Phnom Penh", ""),
+  })),
+]
+
+function AppliesTo({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="ml-1.5 font-medium tracking-normal normal-case text-[#a39787]">
+      · {children}
+    </span>
+  )
+}
 
 type FilterSidebarProps = {
   filters: FilterState
@@ -60,7 +77,7 @@ export function FilterSidebar({
         {/* Housing Type */}
         <div>
           <label className="block text-[11px] font-bold tracking-wider text-[#8b8073] uppercase dark:text-stone-400 mb-2.5">
-            HOUSING TYPE
+            HOUSING TYPE<AppliesTo>rooms</AppliesTo>
           </label>
           <div className="space-y-1">
             {HOUSING_TYPE_OPTIONS.map((opt) => {
@@ -70,6 +87,7 @@ export function FilterSidebar({
                   key={opt.id}
                   type="button"
                   onClick={() => onFilterChange({ ...filters, housingType: opt.id })}
+                  aria-pressed={isSelected}
                   className={cn(
                     "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium transition-colors",
                     isSelected
@@ -88,7 +106,7 @@ export function FilterSidebar({
         {/* Neighborhood / Area */}
         <div className="border-t border-[#f2ebe0] dark:border-stone-800 pt-5">
           <label className="block text-[11px] font-bold tracking-wider text-[#8b8073] uppercase dark:text-stone-400 mb-2.5">
-            NEIGHBORHOOD / AREA
+            NEIGHBORHOOD / AREA<AppliesTo>rooms</AppliesTo>
           </label>
           <div className="space-y-1">
             {AREA_OPTIONS.map((area) => {
@@ -117,11 +135,8 @@ export function FilterSidebar({
         <div className="border-t border-[#f2ebe0] dark:border-stone-800 pt-5">
           <div className="flex items-center justify-between mb-3">
             <label className="text-[11px] font-bold tracking-wider text-[#8b8073] uppercase dark:text-stone-400">
-              MONTHLY BUDGET / RENT
+              RENT PER PERSON<AppliesTo>rooms</AppliesTo>
             </label>
-            <span className="text-xs font-bold text-[#682506] dark:text-amber-400">
-              $150 – $550+
-            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -134,7 +149,7 @@ export function FilterSidebar({
                   onClick={() =>
                     onFilterChange({
                       ...filters,
-                      budgetRange: b.id as FilterState["budgetRange"],
+                      budgetRange: b.id,
                     })
                   }
                   className={cn(
@@ -154,7 +169,7 @@ export function FilterSidebar({
         {/* Lifestyle Rhythms */}
         <div className="border-t border-[#f2ebe0] dark:border-stone-800 pt-5">
           <label className="block text-[11px] font-bold tracking-wider text-[#8b8073] uppercase dark:text-stone-400 mb-3">
-            LIFESTYLE RHYTHMS
+            LIFESTYLE RHYTHMS<AppliesTo>students</AppliesTo>
           </label>
           <div className="grid grid-cols-2 gap-2">
             {LIFESTYLE_OPTIONS.map((opt) => {
@@ -191,7 +206,7 @@ export function FilterSidebar({
         {/* Move-In Horizon */}
         <div className="border-t border-[#f2ebe0] dark:border-stone-800 pt-5">
           <label className="block text-[11px] font-bold tracking-wider text-[#8b8073] uppercase dark:text-stone-400 mb-2.5">
-            MOVE-IN HORIZON
+            MOVE-IN HORIZON<AppliesTo>rooms</AppliesTo>
           </label>
           <div className="space-y-1">
             {MOVE_IN_OPTIONS.map((m) => {
