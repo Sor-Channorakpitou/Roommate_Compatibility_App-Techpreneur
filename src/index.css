@@ -45,6 +45,10 @@
   /* #f7f3ed — footer */
   --surface-sand: oklch(0.9317 0.0087 84.57);
   /* #ebe8e2 — banded section */
+  --surface-dim: oklch(0.9142 0.0092 78.28);
+  /* #e6e2dc — idle step badges, placeholder avatars */
+  --subtle-foreground: oklch(0.5709 0.0298 38.4);
+  /* #88726b — tertiary text, secondary actions */
   --peach: oklch(0.9183 0.0435 39.29);
   /* #ffdbcf */
   --peach-foreground: oklch(0.3694 0.1101 40.79);
@@ -95,6 +99,8 @@
   --color-brand-surface-accent: var(--brand-surface-accent);
   --color-surface: var(--surface);
   --color-surface-sand: var(--surface-sand);
+  --color-surface-dim: var(--surface-dim);
+  --color-subtle-foreground: var(--subtle-foreground);
   --color-peach: var(--peach);
   --color-peach-foreground: var(--peach-foreground);
   --color-sage: var(--sage);
@@ -146,6 +152,10 @@
   --shadow-raised:
     0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-header: 0 1px 8px 0 rgb(92 58 38 / 0.05);
+  --shadow-soft:
+    0 4px 20px -2px rgb(92 58 38 / 0.06), 0 2px 6px -1px rgb(92 58 38 / 0.03);
+  --shadow-lifted:
+    0 12px 32px -4px rgb(70 40 25 / 0.08), 0 4px 12px -2px rgb(70 40 25 / 0.03);
 }
 
 @layer base {

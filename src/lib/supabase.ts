@@ -29,6 +29,26 @@ export type Message = {
   created_at: string
 }
 
+export type RoomArrangement = "private" | "shared"
+
+export type Room = {
+  id: string
+  owner_id: string
+  name: string
+  district: string
+  street: string
+  monthly_rent: number
+  move_in_date: string
+  lease_end_date: string
+  arrangement: RoomArrangement
+  member_count: number
+  accepting_roommates: boolean
+  /** Wizard extras (invitees, house rules, chores, utilities). */
+  settings: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -91,6 +111,28 @@ export type Database = {
           read: boolean
           created_at: string
         }>
+        Relationships: []
+      }
+      rooms: {
+        Row: Room
+        Insert: {
+          id?: string
+          /** Defaults to auth.uid() in the database. */
+          owner_id?: string
+          name: string
+          district: string
+          street?: string
+          monthly_rent: number
+          move_in_date: string
+          lease_end_date: string
+          arrangement?: RoomArrangement
+          member_count: number
+          accepting_roommates?: boolean
+          settings?: Record<string, unknown>
+        }
+        Update: Partial<
+          Omit<Room, "id" | "owner_id" | "created_at" | "updated_at">
+        >
         Relationships: []
       }
     }
