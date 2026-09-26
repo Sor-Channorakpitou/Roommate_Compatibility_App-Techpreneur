@@ -6,6 +6,7 @@ import {
   Check,
   ChevronRight,
   CircleHelp,
+  DoorOpen,
   Eye,
   Heart,
   Home,
@@ -92,6 +93,7 @@ export function ProfilePage() {
           </div>
           <nav aria-label="Profile sections" className="rounded-2xl border border-border/45 bg-card p-2 shadow-sm">
             <a href="#summary" className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm font-medium text-primary"><UserRound className="size-4" /> My Profile</a>
+            <Link to="/rooms" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted"><DoorOpen className="size-4" /> My Rooms</Link>
             <a href="#preferences" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted"><Heart className="size-4" /> Preferences</a>
             <a href="#privacy" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted"><ShieldCheck className="size-4" /> Privacy &amp; Verification</a>
             <a href="#account" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted"><LockKeyhole className="size-4" /> Account Settings</a>

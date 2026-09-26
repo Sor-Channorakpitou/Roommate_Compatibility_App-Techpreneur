@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { toast } from "sonner"
-import { Home, LogOut, Menu, MessageSquare, User, X } from "lucide-react"
+import { DoorOpen, Home, LogOut, Menu, MessageSquare, User, X } from "lucide-react"
 import { cn } from "cn"
 
 import { useAuth } from "@/context/auth-context"
@@ -143,6 +143,13 @@ function MobileUserSection() {
       >
         <Home className="size-4 text-muted-foreground" />
         My Home
+      </Link>
+      <Link
+        to="/rooms"
+        className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-foreground hover:bg-muted"
+      >
+        <DoorOpen className="size-4 text-muted-foreground" />
+        My Rooms
       </Link>
       <button
         type="button"
