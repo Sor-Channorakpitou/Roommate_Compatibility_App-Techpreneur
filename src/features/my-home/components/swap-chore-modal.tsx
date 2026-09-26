@@ -2,12 +2,14 @@ import * as React from "react"
 import { ArrowLeftRight, X } from "lucide-react"
 import { toast } from "sonner"
 
-import type { ChoreItem } from "../types"
+import type { RoomChore } from "@/lib/room-settings"
+import type { ChoreAssignee } from "../types"
 
 type SwapChoreModalProps = {
   isOpen: boolean
   onClose: () => void
-  chores: ChoreItem[]
+  chores: RoomChore[]
+  assignees: ChoreAssignee[]
   onSwapChores: (choreId1: string, choreId2: string) => void
 }
 
@@ -15,26 +17,29 @@ export function SwapChoreModal({
   isOpen,
   onClose,
   chores,
+  assignees,
   onSwapChores,
 }: SwapChoreModalProps) {
-  const sopheakChores = chores.filter((c) => c.assignee.id === "sopheak")
-  const rothanaChores = chores.filter((c) => c.assignee.id === "rothana")
+  const [selectedFirst, setSelectedFirst] = React.useState<string>("")
+  const [selectedSecond, setSelectedSecond] = React.useState<string>("")
 
-  const [selectedMyChore, setSelectedMyChore] = React.useState<string>("")
-  const [selectedTheirChore, setSelectedTheirChore] = React.useState<string>("")
-
-  const activeMyChore = selectedMyChore || sopheakChores[0]?.id || ""
-  const activeTheirChore = selectedTheirChore || rothanaChores[0]?.id || ""
+  const first = chores.find((c) => c.id === selectedFirst) ?? chores[0]
+  // Only chores held by someone else are worth swapping with.
+  const candidates = chores.filter((c) => c.assignee !== first?.assignee)
+  const second =
+    candidates.find((c) => c.id === selectedSecond) ?? candidates[0]
 
   if (!isOpen) return null
 
+  const labelOf = (chore: RoomChore) =>
+    `${chore.title} (${assignees.find((a) => a.id === chore.assignee)?.label ?? "Everyone"})`
+
   function handleConfirmSwap() {
-    if (!activeMyChore || !activeTheirChore) {
-      toast.error("Please select both chores to swap")
+    if (!first || !second) {
+      toast.error("Pick two chores held by different people")
       return
     }
-    onSwapChores(activeMyChore, activeTheirChore)
-    toast.success("Chores swapped successfully with Rothana!")
+    onSwapChores(first.id, second.id)
     onClose()
   }
 
@@ -71,16 +76,20 @@ export function SwapChoreModal({
         <div className="mt-4 space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">
-              Your Current Chore
+              Chore
             </label>
             <select
-              value={activeMyChore}
-              onChange={(e) => setSelectedMyChore(e.target.value)}
+              aria-label="First chore"
+              value={first?.id ?? ""}
+              onChange={(e) => {
+                setSelectedFirst(e.target.value)
+                setSelectedSecond("")
+              }}
               className="w-full rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3.5 py-2 text-xs text-foreground focus:border-[#7a3418] focus:outline-none"
             >
-              {sopheakChores.map((c) => (
+              {chores.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.title} ({c.recurrence})
+                  {labelOf(c)}
                 </option>
               ))}
             </select>
@@ -94,23 +103,28 @@ export function SwapChoreModal({
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">
-              Trade with Rothana P.'s Chore
+              Swap assignees with
             </label>
             <select
-              value={activeTheirChore}
-              onChange={(e) => setSelectedTheirChore(e.target.value)}
+              aria-label="Second chore"
+              value={second?.id ?? ""}
+              disabled={candidates.length === 0}
+              onChange={(e) => setSelectedSecond(e.target.value)}
               className="w-full rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3.5 py-2 text-xs text-foreground focus:border-[#7a3418] focus:outline-none"
             >
-              {rothanaChores.map((c) => (
+              {candidates.length === 0 && (
+                <option value="">No chores held by someone else</option>
+              )}
+              {candidates.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.title} ({c.recurrence})
+                  {labelOf(c)}
                 </option>
               ))}
             </select>
           </div>
 
           <p className="text-center text-[11px] text-muted-foreground">
-            Both roommates will receive a notification and the rotation will adjust automatically.
+            The two chores trade assignees. Everything else stays the same.
           </p>
         </div>
 

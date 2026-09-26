@@ -2,49 +2,50 @@ import * as React from "react"
 import { ListPlus, X } from "lucide-react"
 import { toast } from "sonner"
 
-import type { ChoreAssignee, ChoreItem } from "../types"
-import { ASSIGNEE_ROTHANA, ASSIGNEE_SOPHEAK } from "../data/my-home-data"
+import type { RoomChore } from "@/lib/room-settings"
+import type { ChoreAssignee } from "../types"
 
 type AddChoreModalProps = {
   isOpen: boolean
   onClose: () => void
-  onAddChore: (chore: ChoreItem) => void
+  assignees: ChoreAssignee[]
+  /** Resolves true once saved. */
+  onAddChore: (chore: RoomChore) => Promise<boolean>
 }
 
 export function AddChoreModal({
   isOpen,
   onClose,
+  assignees,
   onAddChore,
 }: AddChoreModalProps) {
   const [title, setTitle] = React.useState("")
   const [recurrence, setRecurrence] = React.useState("Weekly")
-  const [dueNote, setDueNote] = React.useState("Due Sunday evening")
-  const [assigneeId, setAssigneeId] = React.useState("sopheak")
+  const [dueNote, setDueNote] = React.useState("")
+  const [assigneeId, setAssigneeId] = React.useState("host")
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   if (!isOpen) return null
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) {
       toast.error("Please enter a chore title")
       return
     }
 
-    const assignee: ChoreAssignee =
-      assigneeId === "sopheak" ? ASSIGNEE_SOPHEAK : ASSIGNEE_ROTHANA
-
-    const newChore: ChoreItem = {
-      id: `chore-${Date.now()}`,
+    setIsSubmitting(true)
+    const saved = await onAddChore({
+      id: `chore-${crypto.randomUUID()}`,
       title: title.trim(),
-      recurrence,
-      dueNote,
-      assignee,
-      isCompleted: false,
-    }
-
-    onAddChore(newChore)
-    toast.success(`Added chore "${title.trim()}"!`)
+      schedule: [recurrence, dueNote.trim()].filter(Boolean).join(" · "),
+      assignee: assigneeId,
+      completed: false,
+    })
+    setIsSubmitting(false)
+    if (!saved) return
     setTitle("")
+    setDueNote("")
     onClose()
   }
 
@@ -123,7 +124,7 @@ export function AddChoreModal({
                 type="text"
                 value={dueNote}
                 onChange={(e) => setDueNote(e.target.value)}
-                placeholder="Due Sunday evening"
+                placeholder="e.g. Sunday evening"
                 className="w-full rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3 py-2 text-xs text-foreground focus:border-[#7a3418] focus:outline-none"
               />
             </div>
@@ -134,35 +135,30 @@ export function AddChoreModal({
               Initial Assignee
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setAssigneeId("sopheak")}
-                className={`flex items-center gap-2 rounded-xl border p-2.5 text-xs transition-colors ${
-                  assigneeId === "sopheak"
-                    ? "border-[#7a3418] bg-[#fce5dc]/40 font-semibold text-[#9c4220]"
-                    : "border-[#eee6dc] bg-[#f9f5f0] text-muted-foreground hover:bg-[#f5ece2]"
-                }`}
-              >
-                <span className="flex size-6 items-center justify-center rounded-full bg-[#fce5dc] text-[11px] font-bold text-[#9c4220]">
-                  SC
-                </span>
-                <span>Sopheak (You)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAssigneeId("rothana")}
-                className={`flex items-center gap-2 rounded-xl border p-2.5 text-xs transition-colors ${
-                  assigneeId === "rothana"
-                    ? "border-[#276e33] bg-[#d8edd9]/40 font-semibold text-[#276e33]"
-                    : "border-[#eee6dc] bg-[#f9f5f0] text-muted-foreground hover:bg-[#f5ece2]"
-                }`}
-              >
-                <span className="flex size-6 items-center justify-center rounded-full bg-[#d8edd9] text-[11px] font-bold text-[#276e33]">
-                  RP
-                </span>
-                <span>Rothana P.</span>
-              </button>
+              {assignees.map((option) => {
+                const isSelected = assigneeId === option.id
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setAssigneeId(option.id)}
+                    className={`flex items-center gap-2 rounded-xl border p-2.5 text-xs transition-colors ${
+                      isSelected
+                        ? "border-[#7a3418] bg-[#fce5dc]/40 font-semibold text-[#9c4220]"
+                        : "border-[#eee6dc] bg-[#f9f5f0] text-muted-foreground hover:bg-[#f5ece2]"
+                    }`}
+                  >
+                    <span
+                      className="flex size-6 items-center justify-center rounded-full text-[10px] font-bold"
+                      style={{ backgroundColor: option.badgeBg, color: option.textColor }}
+                    >
+                      {option.initials}
+                    </span>
+                    <span>{option.label}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -176,9 +172,10 @@ export function AddChoreModal({
             </button>
             <button
               type="submit"
-              className="rounded-full bg-[#7a3418] px-5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-[#682c14]"
+              disabled={isSubmitting}
+              className="rounded-full bg-[#7a3418] px-5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-[#682c14] disabled:opacity-50"
             >
-              Add Chore
+              {isSubmitting ? "Adding…" : "Add Chore"}
             </button>
           </div>
         </form>

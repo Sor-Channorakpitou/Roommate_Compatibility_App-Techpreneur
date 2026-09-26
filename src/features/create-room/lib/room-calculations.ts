@@ -1,8 +1,8 @@
-import { formatMonthYear, formatUsd } from "@/lib/format"
+import { formatMonthYear, formatTime, formatUsd } from "@/lib/format"
 import type { RoomDraft, RoomDraftErrors, Utility } from "../types"
 
 // Re-exported so wizard components keep a single import site.
-export { formatMonthYear, formatUsd }
+export { formatMonthYear, formatTime, formatUsd }
 
 export const ROOM_NAME_MAX_LENGTH = 80
 const MONTHLY_RENT_MAX = 100_000
@@ -32,16 +32,6 @@ export function splitRatioLabel(members: number) {
 
 export function equalShareLabel(members: number) {
   return `Equal ${Math.round(100 / members)}% split`
-}
-
-/** "22:00" → "10:00 PM", or "10 PM" when `compact` drops whole hours. */
-export function formatTime(value: string, { compact = false } = {}) {
-  const [hours, minutes] = value.split(":").map(Number)
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value
-  const period = hours >= 12 ? "PM" : "AM"
-  const hour12 = hours % 12 || 12
-  if (compact && minutes === 0) return `${hour12} ${period}`
-  return `${hour12}:${String(minutes).padStart(2, "0")} ${period}`
 }
 
 export function acModeLabel(temperature: number) {

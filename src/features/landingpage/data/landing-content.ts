@@ -13,12 +13,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import listingBkk1 from "@/assets/images/listing-bkk1.jpg"
-import listingToulKork from "@/assets/images/listing-toul-kork.jpg"
 import memberSereyroth from "@/assets/images/member-sereyroth.jpg"
 import roomPreview from "@/assets/images/room-preview.jpg"
-import seekerSovann from "@/assets/images/seeker-sovann.jpg"
-import seekerSreynoch from "@/assets/images/seeker-sreynoch.jpg"
 
 export type SearchField = {
   id: string
@@ -75,7 +71,7 @@ export const featuredMatch: FeaturedMatch = {
   roomImageAlt:
     "Sunlit shared apartment with potted plants, a balcony overlooking Phnom Penh, and a wooden study desk",
   avatarImage: memberSereyroth,
-  profileHref: "/members/sereyroth",
+  profileHref: "/browse",
 }
 
 export type LivingHabit = {
@@ -186,7 +182,7 @@ export const heroActions: HeroAction[] = [
     title: "Looking for a place?",
     description: "Browse compatible rooms",
     cta: "Create your profile",
-    href: "/sign-up",
+    href: "/register",
     icon: UserSearch,
     accentClassName: "bg-sage/40 text-sage-foreground",
   },
@@ -202,79 +198,15 @@ export type Listing = {
   subtitle: string
   description: string
   meta: string
-  price: string
+  price: string | null
   status: string
   /** Tailwind background for the solid status pill. */
   statusClassName: string
-  image: string
+  /** Photo URL; cards without one show initials or a house icon. */
+  image: string | null
   imageAlt: string
   href: string
 }
-
-export const featuredListings: Listing[] = [
-  {
-    id: "toul-kork-master",
-    kind: "room",
-    title: "Toul Kork, Phnom Penh",
-    subtitle: "Furnished master bedroom with en-suite",
-    description:
-      "Spacious sunny room with dedicated study desk, AC, and high-speed Wi-Fi.",
-    meta: "Room near CADT, RUPP · Available Nov 1",
-    price: "$280 / mo",
-    status: "Verified Room",
-    statusClassName: "bg-[#652c00]",
-    image: listingToulKork,
-    imageAlt:
-      "Sunlit bedroom with a wooden bed frame, study desk by a full-height window, and a woven rug",
-    href: "/listings/toul-kork-master",
-  },
-  {
-    id: "sovann",
-    kind: "seeker",
-    title: "Sovann, 24",
-    subtitle: "Graphic designer · Non-smoker",
-    description:
-      "Easygoing, respectful, and tidy. Looking for a shared apartment in BKK1.",
-    meta: "Looking in BKK1, TTP · Move-in Oct 15",
-    price: "$220 budget",
-    status: "New",
-    statusClassName: "bg-primary",
-    image: seekerSovann,
-    imageAlt: "Sovann smiling at an outdoor cafe table",
-    href: "/members/sovann",
-  },
-  {
-    id: "bkk1-penthouse",
-    kind: "room",
-    title: "BKK1, Phnom Penh",
-    subtitle: "Private room in shared penthouse flat",
-    description:
-      "Bright room in airy apartment with balcony, shared kitchen, and weekly cleaning.",
-    meta: "Near BKK1 cafes · Available now",
-    price: "$320 inc. bills",
-    status: "Verified",
-    statusClassName: "bg-sage-foreground",
-    image: listingBkk1,
-    imageAlt:
-      "Warm living room with a low sofa, rattan chair, and plants beside a balcony door",
-    href: "/listings/bkk1-penthouse",
-  },
-  {
-    id: "sreynoch",
-    kind: "seeker",
-    title: "Sreynoch, 26",
-    subtitle: "Software engineer · Early bird",
-    description:
-      "Focused tech professional. I enjoy calm evenings, reading, and pristine shared spaces.",
-    meta: "Looking in Toul Kork, Daun Penh · Nov 1",
-    price: "$260 budget",
-    status: "Updated",
-    statusClassName: "bg-brand",
-    image: seekerSreynoch,
-    imageAlt: "Sreynoch smiling outdoors on a tree-lined street",
-    href: "/members/sreynoch",
-  },
-]
 
 /** Footer icon differs by listing kind: a place pin vs. someone searching. */
 export const listingMetaIcon: Record<ListingKind, LucideIcon> = {
@@ -282,4 +214,3 @@ export const listingMetaIcon: Record<ListingKind, LucideIcon> = {
   seeker: Compass,
 }
 
-export const listingsTotal = "120+"

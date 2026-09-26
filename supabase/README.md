@@ -19,7 +19,7 @@ This project is configured to use [Supabase](https://supabase.com) for authentic
 2. Find the following values:
    - **Project URL**
    - **Project API Keys** -> `anon` / `public`
-3. Open `.env` in the root of this project and paste your keys:
+3. Open `.env.local` (or `.env`) in the root of this project and paste your keys:
    ```env
    VITE_SUPABASE_URL=https://your-project-ref.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -31,23 +31,21 @@ This project is configured to use [Supabase](https://supabase.com) for authentic
 
 ---
 
-## 3. Apply Database Migrations
+## 3. Run the Database Schema
 
-The app's current schema is defined by the timestamped files in
-[`supabase/migrations`](./migrations). Apply them in order so profile
-preferences, user listings, mutual-interest requests, and chat permissions are
-all created consistently.
+1. In your Supabase Dashboard, click on **SQL Editor** in the left sidebar.
+2. Click **New query**.
+3. Copy the entire contents of [`supabase/schema.sql`](./schema.sql).
+4. Paste it into the SQL Editor and click **Run**.
+5. You should see `Success. No rows returned`.
 
-With the Supabase CLI installed and this project linked to your Supabase
-project, run:
-
-```bash
-supabase db push
-```
-
-For the SQL Editor, run the migration files in timestamp order. Do not use the
-older [`schema.sql`](./schema.sql) as a replacement; it predates the current
-listing and matching schema.
+This will:
+- Create the `profiles` table.
+- Create the `compatibility_responses` table.
+- Create the `messages` table.
+- Configure automatic user sync on signup via PostgreSQL triggers (`on_auth_user_created`).
+- Set up Row Level Security (RLS) policies.
+- Enable Supabase Realtime for messages.
 
 ---
 
@@ -62,7 +60,40 @@ This creates the `rooms` table with SELECT, INSERT, UPDATE and DELETE policies s
 
 ---
 
-## 5. Auth Settings (Optional Recommended Step)
+## 5. Publish Room Listings
+
+Browse and the landing page show other hosts' open rooms. Rooms themselves stay
+owner-only, so run one more script:
+
+1. In the **SQL Editor**, open a new query.
+2. Paste [`supabase/migrations/20260927000000_public_room_listings.sql`](./migrations/20260927000000_public_room_listings.sql) and click **Run** (or run `supabase db push`).
+
+This adds `list_open_rooms()`, which returns only listing-safe columns (never
+invitee contacts or join codes) for rooms that are accepting roommates. It also
+stops the `profiles.email` column from being readable through the API: profiles
+stay public so students can find each other, but emails don't.
+
+Until it's applied, the Places tab on Browse stays empty and explains why.
+
+---
+
+## 6. Demo Data (Optional)
+
+To make the site feel lived-in, paste [`supabase/seed.sql`](./seed.sql) into the
+**SQL Editor** and click **Run** after the migrations above. It adds 14 demo
+students (12 with quiz answers), 5 open rooms, and a few conversations.
+
+- Every demo account signs in with the password `RoomieDemo!2026`. Try
+  `sophea.chan@example.com`: she hosts a room and has unread messages.
+- Re-running it is safe; it skips rows that already exist.
+- Before launching to real students, run
+  [`supabase/seed_cleanup.sql`](./seed_cleanup.sql). It deletes only the demo
+  accounts (ids starting `5eed0000-`, `@example.com` emails) and everything
+  attached to them.
+
+---
+
+## 7. Auth Settings (Optional Recommended Step)
 
 For local development or testing without email confirmation:
 1. In the Supabase dashboard, go to **Authentication** -> **Providers** -> **Email**.

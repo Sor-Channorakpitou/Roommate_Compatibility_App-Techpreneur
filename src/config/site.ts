@@ -32,15 +32,15 @@ export const mainNav: NavLink[] = [
 ]
 
 export const quickLinks: IconNavLink[] = [
-  { label: "Discovery", href: "/discovery", icon: Search },
+  { label: "Browse", href: "/browse", icon: Search },
   {
     label: "Compatibility Test",
     href: "/compatibility-test",
     icon: BrainCircuit,
   },
-  { label: "Agreements", href: "/agreements", icon: Gavel },
-  { label: "Chores & Household", href: "/chores", icon: ListChecks },
-  { label: "Phnom Penh Hubs", href: "/hubs", icon: MapPin },
+  { label: "Create a Room", href: "/rooms/new", icon: MapPin },
+  { label: "House Agreements", href: "/my-home", icon: Gavel },
+  { label: "Chores & Household", href: "/my-home", icon: ListChecks },
 ]
 
 export const legalLinks: NavLink[] = [

@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { DEFAULT_ROOM_DRAFT, MEMBER_LIMITS } from "../data/create-room-defaults"
+import { createDefaultRoomDraft, MEMBER_LIMITS } from "../data/create-room-defaults"
 import type { HouseRules, Invitee, RoomDraft } from "../types"
 
 const STORAGE_KEY = "roomiematch:create-room-draft:v1"
@@ -77,7 +77,7 @@ function readStoredDraft(): StoredDraft | null {
     if (!parsed.draft || typeof parsed.savedAt !== "number") return null
     // Merge over the defaults so older drafts pick up newly added fields.
     return {
-      draft: { ...DEFAULT_ROOM_DRAFT, ...parsed.draft },
+      draft: { ...createDefaultRoomDraft(), ...parsed.draft },
       savedAt: parsed.savedAt,
     }
   } catch {
@@ -99,7 +99,8 @@ export function useRoomDraft() {
   const [stored] = React.useState(readStoredDraft)
   const [draft, dispatch] = React.useReducer(
     draftReducer,
-    stored?.draft ?? DEFAULT_ROOM_DRAFT
+    stored?.draft,
+    (storedDraft) => storedDraft ?? createDefaultRoomDraft()
   )
   const [savedAt, setSavedAt] = React.useState<number | null>(
     stored?.savedAt ?? null

@@ -2,6 +2,7 @@
 -- Supabase Schema for Roommate Compatibility App
 -- Run this script in your Supabase SQL Editor:
 -- https://supabase.com/dashboard/project/_/sql
+-- Mirrors supabase/migrations/20260923000000_roomiematch_schema.sql. Safe to re-run.
 -- ==============================================================================
 
 -- 1. Profiles Table
@@ -21,16 +22,19 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone" 
   ON public.profiles 
   FOR SELECT 
   USING (true);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 CREATE POLICY "Users can insert their own profile" 
   ON public.profiles 
   FOR INSERT 
   WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" 
   ON public.profiles 
   FOR UPDATE 
@@ -78,18 +82,21 @@ CREATE TABLE IF NOT EXISTS public.compatibility_responses (
 -- Enable RLS on compatibility_responses
 ALTER TABLE public.compatibility_responses ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Compatibility responses are viewable by authenticated users" ON public.compatibility_responses;
 CREATE POLICY "Compatibility responses are viewable by authenticated users" 
   ON public.compatibility_responses 
   FOR SELECT 
   TO authenticated 
   USING (true);
 
+DROP POLICY IF EXISTS "Users can insert their own compatibility responses" ON public.compatibility_responses;
 CREATE POLICY "Users can insert their own compatibility responses" 
   ON public.compatibility_responses 
   FOR INSERT 
   TO authenticated 
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own compatibility responses" ON public.compatibility_responses;
 CREATE POLICY "Users can update their own compatibility responses" 
   ON public.compatibility_responses 
   FOR UPDATE 
@@ -109,23 +116,34 @@ CREATE TABLE IF NOT EXISTS public.messages (
 -- Enable RLS on messages
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can see messages they sent or received" ON public.messages;
 CREATE POLICY "Users can see messages they sent or received" 
   ON public.messages 
   FOR SELECT 
   TO authenticated 
   USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
 
+DROP POLICY IF EXISTS "Users can send messages" ON public.messages;
 CREATE POLICY "Users can send messages" 
   ON public.messages 
   FOR INSERT 
   TO authenticated 
   WITH CHECK (auth.uid() = sender_id);
 
+DROP POLICY IF EXISTS "Recipients can update message read status" ON public.messages;
 CREATE POLICY "Recipients can update message read status" 
   ON public.messages 
   FOR UPDATE 
   TO authenticated 
   USING (auth.uid() = receiver_id);
 
--- Enable Realtime for messages (Optional: Run in SQL editor)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+-- Enable Realtime for messages (live chat and the unread badge rely on it)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'messages'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+  END IF;
+END $$;

@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom"
+import { House } from "lucide-react"
 import { cn } from "cn"
 
 import { Badge } from "@/components/ui/badge"
@@ -5,23 +7,42 @@ import {
   listingMetaIcon,
   type Listing,
 } from "@/features/landingpage/data/landing-content"
+import { getInitials } from "@/lib/format"
 
 function ListingCard({ listing }: { listing: Listing }) {
   const MetaIcon = listingMetaIcon[listing.kind]
 
   return (
-    <a
-      href={listing.href}
+    <Link
+      to={listing.href}
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-card transition-shadow outline-none hover:shadow-floating focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <div className="relative h-44 shrink-0 overflow-hidden bg-muted">
-        <img
-          src={listing.image}
-          alt={listing.imageAlt}
-          className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          loading="lazy"
-          decoding="async"
-        />
+        {listing.image ? (
+          <img
+            src={listing.image}
+            alt={listing.imageAlt}
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div
+            aria-hidden
+            className={cn(
+              "flex size-full items-center justify-center",
+              listing.kind === "room" ? "bg-peach/40 text-primary" : "bg-sage/30 text-sage-foreground"
+            )}
+          >
+            {listing.kind === "room" ? (
+              <House className="size-10" />
+            ) : (
+              <span className="flex size-16 items-center justify-center rounded-full bg-card font-heading text-xl font-semibold shadow-card">
+                {getInitials(listing.title)}
+              </span>
+            )}
+          </div>
+        )}
         <div className="absolute bottom-2.5 left-2.5 flex flex-wrap items-center gap-1.5">
           <Badge
             className={cn(
@@ -31,9 +52,11 @@ function ListingCard({ listing }: { listing: Listing }) {
           >
             {listing.status}
           </Badge>
-          <Badge className="h-auto bg-card/90 px-2.5 py-0.5 text-[0.6875rem] leading-[1.2] font-bold tracking-[0.08em] text-primary shadow-card backdrop-blur-md">
-            {listing.price}
-          </Badge>
+          {listing.price && (
+            <Badge className="h-auto bg-card/90 px-2.5 py-0.5 text-[0.6875rem] leading-[1.2] font-bold tracking-[0.08em] text-primary shadow-card backdrop-blur-md">
+              {listing.price}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -57,7 +80,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           <span>{listing.meta}</span>
         </p>
       </div>
-    </a>
+    </Link>
   )
 }
 

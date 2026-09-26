@@ -1,19 +1,20 @@
 import { Calendar, MapPin, Settings, UserPlus, Users } from "lucide-react"
 
 type RoomHeroCardProps = {
-  roomName?: string
-  location?: string
-  roommatesCount?: number
-  leaseEnd?: string
+  roomName: string
+  location: string
+  /** Household size the host set up, including themselves. */
+  roommatesCount: number
+  leaseEnd: string
   onInviteClick: () => void
   onSettingsClick: () => void
 }
 
 export function RoomHeroCard({
-  roomName = "Sunflower Sanctuary",
-  location = "Toul Kork, Phnom Penh",
-  roommatesCount = 2,
-  leaseEnd = "Oct 2027",
+  roomName,
+  location,
+  roommatesCount,
+  leaseEnd,
   onInviteClick,
   onSettingsClick,
 }: RoomHeroCardProps) {
@@ -34,7 +35,7 @@ export function RoomHeroCard({
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <Users className="size-4 text-muted-foreground/80" aria-hidden="true" />
-              {roommatesCount} roommates
+              {roommatesCount}-person household
             </span>
             <span aria-hidden="true" className="text-muted-foreground/50">
               •

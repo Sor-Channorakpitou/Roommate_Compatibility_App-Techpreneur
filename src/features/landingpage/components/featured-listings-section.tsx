@@ -5,14 +5,13 @@ import { ButtonLink } from "@/components/common/button-link"
 import { Eyebrow } from "@/components/common/eyebrow"
 import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/features/landingpage/components/listing-card"
-import {
-  featuredListings,
-  listingsTotal,
-} from "@/features/landingpage/data/landing-content"
+import { useFeaturedListings } from "@/features/landingpage/hooks/use-featured-listings"
 
 const CARD_GAP = 24
 
 function FeaturedListingsSection() {
+  const featured = useFeaturedListings()
+  const listings = featured.status === "ready" ? featured.listings : []
   const scrollerRef = React.useRef<HTMLDivElement>(null)
   const [atStart, setAtStart] = React.useState(true)
   const [atEnd, setAtEnd] = React.useState(true)
@@ -35,7 +34,7 @@ function FeaturedListingsSection() {
       el.removeEventListener("scroll", syncEdges)
       window.removeEventListener("resize", syncEdges)
     }
-  }, [syncEdges])
+  }, [syncEdges, listings.length])
 
   const scrollByCard = (direction: 1 | -1) => {
     const el = scrollerRef.current
@@ -47,6 +46,9 @@ function FeaturedListingsSection() {
 
   // All four fit at desktop, so the arrows only earn their place once they don't.
   const isScrollable = !atStart || !atEnd
+
+  // Nothing real to feature yet: skip the section rather than show filler.
+  if (featured.status === "ready" && listings.length === 0) return null
 
   return (
     <section
@@ -63,8 +65,8 @@ function FeaturedListingsSection() {
             Available Rooms &amp; Roommate Seekers
           </h2>
           <p className="mt-2 text-[0.9375rem] leading-[1.55] text-pretty text-muted-foreground">
-            Fresh listings with transparent lifestyle rhythms and upfront
-            budgets across Phnom Penh.
+            Real rooms and students on RoomieMatch right now, with their
+            lifestyle rhythms up front.
           </p>
         </div>
 
@@ -101,8 +103,18 @@ function FeaturedListingsSection() {
         aria-label="Featured rooms and roommate seekers"
         className="-mx-5 no-scrollbar snap-x snap-mandatory scroll-px-5 overflow-x-auto px-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:-mx-8 sm:scroll-px-8 sm:px-8"
       >
-        <ul className="flex items-stretch gap-6 lg:grid lg:grid-cols-4">
-          {featuredListings.map((listing) => (
+        <ul
+          aria-busy={featured.status === "loading"}
+          className="flex items-stretch gap-6 lg:grid lg:grid-cols-4"
+        >
+          {featured.status === "loading" &&
+            [0, 1, 2, 3].map((key) => (
+              <li
+                key={key}
+                className="h-80 w-[17.5rem] shrink-0 animate-pulse rounded-2xl bg-muted/60 sm:w-[19rem] lg:w-auto"
+              />
+            ))}
+          {listings.map((listing) => (
             <li
               key={listing.id}
               data-listing-card
@@ -116,7 +128,9 @@ function FeaturedListingsSection() {
 
       <div className="flex justify-center">
         <ButtonLink href="/browse" variant="brand-outline" size="pill">
-          Browse all {listingsTotal} active listings &amp; roommates
+          {featured.status === "ready"
+            ? `Browse all ${featured.total} listings & roommates`
+            : "Browse listings & roommates"}
           <ArrowRight aria-hidden className="size-3" />
         </ButtonLink>
       </div>
