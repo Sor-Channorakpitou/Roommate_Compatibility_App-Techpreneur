@@ -95,7 +95,16 @@ function UserMenu({ className }: { className?: string }) {
 }
 
 function MobileUserSection() {
-  const { user, logout } = useAuth()
+  const { user, logout, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 border-t border-border/40 px-2 py-3">
+        <div className="size-8 animate-pulse rounded-full bg-muted" />
+        <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+      </div>
+    )
+  }
 
   if (!user) return null
 
@@ -149,7 +158,7 @@ function MobileUserSection() {
 
 function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/95 shadow-header backdrop-blur-md">
@@ -163,10 +172,11 @@ function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-6 lg:flex">
-
           <ActionButtons />
 
-          {user ? (
+          {isLoading ? (
+            <div className="h-8 w-20 animate-pulse rounded-full bg-muted/60" />
+          ) : user ? (
             <UserMenu />
           ) : (
             <Button
@@ -207,7 +217,7 @@ function SiteHeader() {
             </nav>
             <div className="flex flex-wrap items-center gap-3">
               <ActionButtons />
-              {!user && (
+              {!isLoading && !user && (
                 <ButtonLink
                   href="/sign-in"
                   variant="ghost"

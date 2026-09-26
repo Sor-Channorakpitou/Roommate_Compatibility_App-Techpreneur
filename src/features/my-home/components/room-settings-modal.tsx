@@ -19,15 +19,21 @@ export function RoomSettingsModal({
   currentLease,
   onSave,
 }: RoomSettingsModalProps) {
+  const [prevProps, setPrevProps] = React.useState({ currentName, currentLocation, currentLease })
   const [name, setName] = React.useState(currentName)
   const [location, setLocation] = React.useState(currentLocation)
   const [lease, setLease] = React.useState(currentLease)
 
-  React.useEffect(() => {
+  if (
+    prevProps.currentName !== currentName ||
+    prevProps.currentLocation !== currentLocation ||
+    prevProps.currentLease !== currentLease
+  ) {
+    setPrevProps({ currentName, currentLocation, currentLease })
     setName(currentName)
     setLocation(currentLocation)
     setLease(currentLease)
-  }, [currentName, currentLocation, currentLease])
+  }
 
   if (!isOpen) return null
 

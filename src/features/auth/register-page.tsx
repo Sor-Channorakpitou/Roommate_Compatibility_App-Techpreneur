@@ -1,7 +1,8 @@
-import * as React from "react"
+﻿import * as React from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { toast } from "sonner"
 import {
+  AlertCircle,
   ArrowRight,
   Check,
   ChevronDown,
@@ -58,9 +59,10 @@ type UniversitySelectProps = {
   value: string
   onChange: (val: string) => void
   error?: string
+  disabled?: boolean
 }
 
-function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
+function UniversitySelect({ value, onChange, error, disabled }: UniversitySelectProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
@@ -94,10 +96,11 @@ function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
       <button
         type="button"
         id="reg-university"
+        disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex h-10 w-full items-center justify-between rounded-lg border bg-card px-3 py-2 text-sm transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${
+        onClick={() => !disabled && setIsOpen((prev) => !prev)}
+        className={`flex h-10 w-full items-center justify-between rounded-lg border bg-card px-3 py-2 text-sm transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 ${
           error
             ? "border-destructive ring-1 ring-destructive/30"
             : isOpen
@@ -123,7 +126,7 @@ function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
         />
       </button>
 
-      {isOpen && (
+      {isOpen && !disabled && (
         <div
           role="listbox"
           aria-label="University selection"
@@ -170,7 +173,7 @@ function UniversitySelect({ value, onChange, error }: UniversitySelectProps) {
 // ---------------------------------------------------------------------------
 
 function RegisterPage() {
-  const { register, isLoading } = useAuth()
+  const { register, isSubmitting, user } = useAuth()
   const navigate = useNavigate()
 
   const [name, setName] = React.useState("")
@@ -185,26 +188,35 @@ function RegisterPage() {
   const [errors, setErrors] = React.useState<FormErrors>({})
   const [serverError, setServerError] = React.useState("")
 
+  // If already authenticated, redirect to home
+  React.useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true })
+    }
+  }, [user, navigate])
+
   function validate(): FormErrors {
     const e: FormErrors = {}
     if (!name.trim()) e.name = "Full name is required."
     if (!email.trim()) e.email = "Email is required."
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      e.email = "Enter a valid email."
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      e.email = "Enter a valid email address."
     if (!password) e.password = "Password is required."
-    else if (password.length < 6) e.password = "Must be at least 6 characters."
+    else if (password.length < 6) e.password = "Password must be at least 6 characters."
     if (password !== confirmPassword)
       e.confirmPassword = "Passwords do not match."
-    if (!university) e.university = "Select your university."
+    if (!university) e.university = "Please select your university."
     if (university === "Other" && !customUniversity.trim()) {
       e.customUniversity = "Please enter your university name."
     }
-    if (!gender) e.gender = "Select your gender."
+    if (!gender) e.gender = "Please select your gender."
     return e
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
+    if (isSubmitting) return
+
     setServerError("")
     const validationErrors = validate()
     setErrors(validationErrors)
@@ -219,28 +231,35 @@ function RegisterPage() {
       university === "Other" ? customUniversity.trim() : university
 
     const result = await register({
-      name,
-      email,
+      name: name.trim(),
+      email: email.trim(),
       password,
       university: finalUniversity,
       gender,
     })
+
     if (result.ok) {
-      if (result.needsEmailConfirmation) {
-        toast.success("Check your email to confirm your account", {
-          description: "After confirming, return here and sign in.",
+      if (result.requiresEmailVerification) {
+        toast.info("Account Created!", {
+          description:
+            result.message ||
+            "Please check your email to confirm your account before signing in.",
+          duration: 8000,
         })
         navigate("/sign-in")
-        return
+      } else {
+        toast.success(`Welcome to RoomieMatch, ${name}!`, {
+          description:
+            "Your account is created. Let's start your compatibility quiz!",
+        })
+        navigate("/compatibility-test")
       }
-      toast.success(`Welcome to RoomieMatch, ${name}!`, {
-        description:
-          "Your account is created. Let's start your compatibility quiz!",
-      })
-      navigate("/compatibility-test")
     } else {
-      const msg = result.error ?? "Registration failed."
+      const msg = result.error ?? "Registration failed. Please try again."
       setServerError(msg)
+      if (msg.toLowerCase().includes("already exists")) {
+        setErrors((prev) => ({ ...prev, email: "An account with this email already exists." }))
+      }
       toast.error("Registration Failed", {
         description: msg,
       })
@@ -268,13 +287,17 @@ function RegisterPage() {
           className="flex flex-col gap-5 rounded-xl bg-card p-6 text-sm text-card-foreground ring-1 ring-foreground/10 sm:p-8"
         >
           {serverError && (
-            <div className="rounded-lg bg-destructive/10 px-4 py-3 text-[0.8125rem] font-medium text-destructive">
-              {serverError}
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3.5 text-[0.8125rem] text-destructive"
+            >
+              <AlertCircle className="size-4 shrink-0 mt-0.5 text-destructive" />
+              <div className="flex-1 leading-snug">{serverError}</div>
             </div>
           )}
 
           {/* Full Name */}
-          <fieldset className="flex flex-col gap-1.5">
+          <fieldset className="flex flex-col gap-1.5" disabled={isSubmitting}>
             <label
               htmlFor="reg-name"
               className="text-[0.8125rem] font-semibold text-foreground"
@@ -284,8 +307,14 @@ function RegisterPage() {
             <Input
               id="reg-name"
               placeholder="e.g. Dara Chea"
+              autoComplete="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              disabled={isSubmitting}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (serverError) setServerError("")
+                if (errors.name) setErrors((prev) => ({ ...prev, name: "" }))
+              }}
               aria-invalid={!!errors.name}
               className="h-10"
             />
@@ -295,7 +324,7 @@ function RegisterPage() {
           </fieldset>
 
           {/* Email */}
-          <fieldset className="flex flex-col gap-1.5">
+          <fieldset className="flex flex-col gap-1.5" disabled={isSubmitting}>
             <label
               htmlFor="reg-email"
               className="text-[0.8125rem] font-semibold text-foreground"
@@ -306,8 +335,14 @@ function RegisterPage() {
               id="reg-email"
               type="email"
               placeholder="you@university.edu.kh"
+              autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                if (serverError) setServerError("")
+                if (errors.email) setErrors((prev) => ({ ...prev, email: "" }))
+              }}
               aria-invalid={!!errors.email}
               className="h-10"
             />
@@ -318,7 +353,7 @@ function RegisterPage() {
 
           {/* Password row */}
           <div className="grid gap-5 sm:grid-cols-2">
-            <fieldset className="flex flex-col gap-1.5">
+            <fieldset className="flex flex-col gap-1.5" disabled={isSubmitting}>
               <label
                 htmlFor="reg-password"
                 className="text-[0.8125rem] font-semibold text-foreground"
@@ -330,15 +365,23 @@ function RegisterPage() {
                   id="reg-password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  autoComplete="new-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    if (serverError) setServerError("")
+                    if (errors.password) setErrors((prev) => ({ ...prev, password: "" }))
+                  }}
                   aria-invalid={!!errors.password}
                   className="h-10 pr-10"
                 />
                 <button
                   type="button"
+                  tabIndex={-1}
+                  disabled={isSubmitting}
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -353,7 +396,7 @@ function RegisterPage() {
               )}
             </fieldset>
 
-            <fieldset className="flex flex-col gap-1.5">
+            <fieldset className="flex flex-col gap-1.5" disabled={isSubmitting}>
               <label
                 htmlFor="reg-confirm"
                 className="text-[0.8125rem] font-semibold text-foreground"
@@ -365,15 +408,25 @@ function RegisterPage() {
                   id="reg-confirm"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  autoComplete="new-password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value)
+                    if (serverError) setServerError("")
+                    if (errors.confirmPassword) {
+                      setErrors((prev) => ({ ...prev, confirmPassword: "" }))
+                    }
+                  }}
                   aria-invalid={!!errors.confirmPassword}
                   className="h-10 pr-10"
                 />
                 <button
                   type="button"
+                  tabIndex={-1}
+                  disabled={isSubmitting}
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                   aria-label={
                     showConfirmPassword
                       ? "Hide confirm password"
@@ -396,7 +449,7 @@ function RegisterPage() {
           </div>
 
           {/* University - Custom Smooth Dropdown */}
-          <fieldset className="flex flex-col gap-1.5">
+          <fieldset className="flex flex-col gap-1.5" disabled={isSubmitting}>
             <label
               htmlFor="reg-university"
               className="text-[0.8125rem] font-semibold text-foreground"
@@ -405,8 +458,13 @@ function RegisterPage() {
             </label>
             <UniversitySelect
               value={university}
+              disabled={isSubmitting}
               onChange={(val) => {
                 setUniversity(val)
+                if (serverError) setServerError("")
+                if (errors.university) {
+                  setErrors((prev) => ({ ...prev, university: "" }))
+                }
                 if (val !== "Other") setCustomUniversity("")
               }}
               error={errors.university}
@@ -428,7 +486,14 @@ function RegisterPage() {
                   id="reg-custom-uni"
                   placeholder="e.g. Paragon International University"
                   value={customUniversity}
-                  onChange={(e) => setCustomUniversity(e.target.value)}
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    setCustomUniversity(e.target.value)
+                    if (serverError) setServerError("")
+                    if (errors.customUniversity) {
+                      setErrors((prev) => ({ ...prev, customUniversity: "" }))
+                    }
+                  }}
                   aria-invalid={!!errors.customUniversity}
                   className="h-10"
                 />
@@ -442,7 +507,7 @@ function RegisterPage() {
           </fieldset>
 
           {/* Gender */}
-          <fieldset className="flex flex-col gap-2">
+          <fieldset className="flex flex-col gap-2" disabled={isSubmitting}>
             <legend className="text-[0.8125rem] font-semibold text-foreground">
               Gender
             </legend>
@@ -450,7 +515,9 @@ function RegisterPage() {
               {GENDERS.map((g) => (
                 <label
                   key={g}
-                  className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[0.8125rem] font-medium transition-all ${
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[0.8125rem] font-medium transition-all ${
+                    isSubmitting ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                  } ${
                     gender === g
                       ? "border-primary bg-primary/8 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/40"
@@ -460,8 +527,13 @@ function RegisterPage() {
                     type="radio"
                     name="gender"
                     value={g}
+                    disabled={isSubmitting}
                     checked={gender === g}
-                    onChange={() => setGender(g)}
+                    onChange={() => {
+                      setGender(g)
+                      if (serverError) setServerError("")
+                      if (errors.gender) setErrors((prev) => ({ ...prev, gender: "" }))
+                    }}
                     className="sr-only"
                   />
                   {g}
@@ -477,10 +549,10 @@ function RegisterPage() {
           <Button
             type="submit"
             size="pill-lg"
-            disabled={isLoading}
-            className="mt-2 w-full shadow-floating"
+            disabled={isSubmitting}
+            className="mt-2 w-full shadow-floating transition-all"
           >
-            {isLoading ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 Creating account…

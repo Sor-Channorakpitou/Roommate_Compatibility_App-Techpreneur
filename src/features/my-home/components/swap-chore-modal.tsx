@@ -20,30 +20,20 @@ export function SwapChoreModal({
   const sopheakChores = chores.filter((c) => c.assignee.id === "sopheak")
   const rothanaChores = chores.filter((c) => c.assignee.id === "rothana")
 
-  const [selectedMyChore, setSelectedMyChore] = React.useState<string>(
-    sopheakChores[0]?.id || ""
-  )
-  const [selectedTheirChore, setSelectedTheirChore] = React.useState<string>(
-    rothanaChores[0]?.id || ""
-  )
+  const [selectedMyChore, setSelectedMyChore] = React.useState<string>("")
+  const [selectedTheirChore, setSelectedTheirChore] = React.useState<string>("")
 
-  React.useEffect(() => {
-    if (sopheakChores[0] && !selectedMyChore) {
-      setSelectedMyChore(sopheakChores[0].id)
-    }
-    if (rothanaChores[0] && !selectedTheirChore) {
-      setSelectedTheirChore(rothanaChores[0].id)
-    }
-  }, [sopheakChores, rothanaChores, selectedMyChore, selectedTheirChore])
+  const activeMyChore = selectedMyChore || sopheakChores[0]?.id || ""
+  const activeTheirChore = selectedTheirChore || rothanaChores[0]?.id || ""
 
   if (!isOpen) return null
 
   function handleConfirmSwap() {
-    if (!selectedMyChore || !selectedTheirChore) {
+    if (!activeMyChore || !activeTheirChore) {
       toast.error("Please select both chores to swap")
       return
     }
-    onSwapChores(selectedMyChore, selectedTheirChore)
+    onSwapChores(activeMyChore, activeTheirChore)
     toast.success("Chores swapped successfully with Rothana!")
     onClose()
   }
@@ -84,7 +74,7 @@ export function SwapChoreModal({
               Your Current Chore
             </label>
             <select
-              value={selectedMyChore}
+              value={activeMyChore}
               onChange={(e) => setSelectedMyChore(e.target.value)}
               className="w-full rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3.5 py-2 text-xs text-foreground focus:border-[#7a3418] focus:outline-none"
             >
@@ -107,7 +97,7 @@ export function SwapChoreModal({
               Trade with Rothana P.'s Chore
             </label>
             <select
-              value={selectedTheirChore}
+              value={activeTheirChore}
               onChange={(e) => setSelectedTheirChore(e.target.value)}
               className="w-full rounded-xl border border-[#eee6dc] bg-[#f9f5f0] px-3.5 py-2 text-xs text-foreground focus:border-[#7a3418] focus:outline-none"
             >
