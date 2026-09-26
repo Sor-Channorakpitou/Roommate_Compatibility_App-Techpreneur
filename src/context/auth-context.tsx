@@ -2,6 +2,7 @@
 import * as React from "react"
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js"
 import { isSupabaseConfigured, supabase } from "@/lib/supabase"
+import { clearAuthTokensFromLocalStorage } from "@/lib/cookie-storage"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,59 +24,73 @@ export type RegisterPayload = {
   gender: string
 }
 
+export type AuthResult = {
+  ok: boolean
+  user?: User
+  error?: string
+  requiresEmailVerification?: boolean
+  message?: string
+}
+
 type AuthContextValue = {
   user: User | null
+  /** True while initially verifying existing session with Supabase on app startup */
   isLoading: boolean
+  /** True when a login or register request is currently in progress */
+  isSubmitting: boolean
   isSupabaseConfigured: boolean
-  login: (email: string, password: string) => Promise<{ ok: boolean; user?: User; error?: string }>
-  register: (payload: RegisterPayload) => Promise<{ ok: boolean; user?: User; error?: string }>
-  logout: () => Promise<void> | void
+  login: (email: string, password: string) => Promise<AuthResult>
+  register: (payload: RegisterPayload) => Promise<AuthResult>
+  logout: () => Promise<void>
 }
 
 // ---------------------------------------------------------------------------
-// LocalStorage Fallback Helpers (used when Supabase is not configured)
+// Error Formatting Helper
 // ---------------------------------------------------------------------------
 
-const USERS_KEY = "roomiematch_users"
-const SESSION_KEY = "roomiematch_session"
+export function formatAuthError(error: unknown): string {
+  if (!error) return "An unexpected error occurred. Please try again."
 
-type StoredUser = User & { password: string }
+  const message =
+    typeof error === "string"
+      ? error
+      : error instanceof Error
+        ? error.message
+        : (error as { message?: string }).message || String(error)
 
-function getStoredUsers(): StoredUser[] {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "[]")
-  } catch {
-    return []
+  const lower = message.toLowerCase()
+
+  if (lower.includes("invalid login credentials")) {
+    return "Invalid email or password. Please verify your credentials and try again."
   }
-}
-
-function saveStoredUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-}
-
-function getStoredSession(): User | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
+  if (lower.includes("email not confirmed")) {
+    return "Your email address has not been confirmed. Please check your inbox for the verification link."
   }
-}
-
-function saveStoredSession(user: User | null) {
-  if (user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user))
-  } else {
-    localStorage.removeItem(SESSION_KEY)
+  if (
+    lower.includes("user already registered") ||
+    lower.includes("already registered") ||
+    lower.includes("user already exists")
+  ) {
+    return "An account with this email already exists. Please sign in instead."
   }
-}
+  if (lower.includes("password should be at least")) {
+    return "Password must be at least 6 characters long."
+  }
+  if (lower.includes("signup requires a valid password")) {
+    return "Please provide a valid password."
+  }
+  if (lower.includes("rate limit") || lower.includes("too many requests")) {
+    return "Too many attempts. Please wait a minute and try again."
+  }
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("networkerror") ||
+    lower.includes("fetch failed")
+  ) {
+    return "Unable to connect to Supabase. Please check your network connection or verify your Supabase project status."
+  }
 
-function fakeDelay(ms = 600) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms))
-}
-
-function generateLocalId() {
-  return `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  return message
 }
 
 // ---------------------------------------------------------------------------
@@ -86,13 +101,13 @@ async function mapSupabaseUser(authUser: SupabaseAuthUser): Promise<User> {
   const metadata = authUser.user_metadata || {}
 
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, name, email, university, gender")
       .eq("id", authUser.id)
       .maybeSingle()
 
-    if (profile) {
+    if (!error && profile) {
       return {
         id: profile.id,
         email: profile.email || authUser.email || "",
@@ -101,8 +116,8 @@ async function mapSupabaseUser(authUser: SupabaseAuthUser): Promise<User> {
         gender: profile.gender || metadata.gender || "Other",
       }
     }
-  } catch {
-    // If profiles table is still provisioning or RLS is configuring, fallback to user_metadata
+  } catch (err) {
+    console.warn("[RoomieMatch] Could not query profiles table, falling back to metadata:", err)
   }
 
   return {
@@ -121,16 +136,27 @@ async function mapSupabaseUser(authUser: SupabaseAuthUser): Promise<User> {
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(() => {
-    return !isSupabaseConfigured ? getStoredSession() : null
-  })
+  // Supabase is the single source of truth: no custom token / user storage in localStorage
+  const [user, setUser] = React.useState<User | null>(null)
   const [isLoading, setIsLoading] = React.useState<boolean>(isSupabaseConfigured)
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
 
-  // Initialize Supabase session & listener if configured
+  // Clean up any legacy manual session tokens left from older versions
+  React.useEffect(() => {
+    try {
+      localStorage.removeItem("roomiematch_session")
+      localStorage.removeItem("roomiematch_users")
+      clearAuthTokensFromLocalStorage()
+    } catch {
+      // Ignore storage errors in restricted contexts
+    }
+  }, [])
+
+  // Initialize Supabase session & subscription
   React.useEffect(() => {
     if (!isSupabaseConfigured) {
-      console.info(
-        "[RoomieMatch] Running in local demo mode. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env to activate Supabase."
+      console.warn(
+        "[RoomieMatch] Supabase credentials not found or invalid. Please check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
       )
       return
     }
@@ -141,14 +167,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const {
           data: { session },
+          error,
         } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error("[RoomieMatch] Supabase getSession error:", error.message)
+          if (isMounted) setUser(null)
+          return
+        }
 
         if (session?.user && isMounted) {
           const appUser = await mapSupabaseUser(session.user)
           if (isMounted) setUser(appUser)
+        } else if (isMounted) {
+          setUser(null)
         }
       } catch (err) {
-        console.error("[RoomieMatch] Error retrieving Supabase session:", err)
+        console.error("[RoomieMatch] Unexpected error retrieving Supabase session:", err)
+        if (isMounted) setUser(null)
       } finally {
         if (isMounted) setIsLoading(false)
       }
@@ -156,13 +192,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initSession()
 
+    // Listen to real-time auth state events directly from Supabase
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const appUser = await mapSupabaseUser(session.user)
         if (isMounted) setUser(appUser)
       } else {
+        if (isMounted) setUser(null)
+      }
+
+      if (event === "SIGNED_OUT") {
         if (isMounted) setUser(null)
       }
     })
@@ -173,110 +214,110 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Sync session to localStorage in mock mode
-  React.useEffect(() => {
-    if (!isSupabaseConfigured) {
-      saveStoredSession(user)
-    }
-  }, [user])
-
-  // Login handler
+  // Login handler using Supabase as source of truth
   const login = React.useCallback(
-    async (
-      email: string,
-      password: string
-    ): Promise<{ ok: boolean; user?: User; error?: string }> => {
-      setIsLoading(true)
-
-      // 1. Supabase Mode
-      if (isSupabaseConfigured) {
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
-          })
-
-          if (error) {
-            setIsLoading(false)
-            return { ok: false, error: error.message }
-          }
-
-          if (!data.user) {
-            setIsLoading(false)
-            return { ok: false, error: "Authentication failed. No user returned." }
-          }
-
-          const appUser = await mapSupabaseUser(data.user)
-          setUser(appUser)
-          setIsLoading(false)
-          return { ok: true, user: appUser }
-        } catch (err) {
-          setIsLoading(false)
-          return {
-            ok: false,
-            error: err instanceof Error ? err.message : "Unexpected error during sign in.",
-          }
+    async (email: string, password: string): Promise<AuthResult> => {
+      if (!isSupabaseConfigured) {
+        return {
+          ok: false,
+          error:
+            "Supabase is not configured. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.",
         }
       }
 
-      // 2. Local Fallback Mode
-      await fakeDelay()
-      const users = getStoredUsers()
-      const match = users.find(
-        (u) =>
-          u.email.toLowerCase() === email.toLowerCase() &&
-          u.password === password
-      )
-      setIsLoading(false)
-      if (!match) return { ok: false, error: "Invalid email or password." }
-      const { password: _, ...safeUser } = match
-      setUser(safeUser)
-      return { ok: true, user: safeUser }
+      setIsSubmitting(true)
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+
+        if (error) {
+          return { ok: false, error: formatAuthError(error) }
+        }
+
+        if (!data.user) {
+          return {
+            ok: false,
+            error: "Authentication failed. No user was returned by Supabase.",
+          }
+        }
+
+        const appUser = await mapSupabaseUser(data.user)
+        setUser(appUser)
+        return { ok: true, user: appUser }
+      } catch (err) {
+        return {
+          ok: false,
+          error: formatAuthError(err),
+        }
+      } finally {
+        setIsSubmitting(false)
+      }
     },
     []
   )
 
-  // Register handler
+  // Register handler using Supabase as source of truth
   const register = React.useCallback(
-    async (
-      payload: RegisterPayload
-    ): Promise<{ ok: boolean; user?: User; error?: string }> => {
-      setIsLoading(true)
+    async (payload: RegisterPayload): Promise<AuthResult> => {
+      if (!isSupabaseConfigured) {
+        return {
+          ok: false,
+          error:
+            "Supabase is not configured. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.",
+        }
+      }
 
-      // 1. Supabase Mode
-      if (isSupabaseConfigured) {
-        try {
-          const { data, error } = await supabase.auth.signUp({
-            email: payload.email.trim(),
-            password: payload.password,
-            options: {
-              data: {
-                name: payload.name.trim(),
-                university: payload.university,
-                gender: payload.gender,
-              },
+      setIsSubmitting(true)
+      try {
+        const cleanEmail = payload.email.trim()
+        const cleanName = payload.name.trim()
+
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: payload.password,
+          options: {
+            data: {
+              name: cleanName,
+              university: payload.university,
+              gender: payload.gender,
             },
-          })
+          },
+        })
 
-          if (error) {
-            setIsLoading(false)
-            return { ok: false, error: error.message }
+        if (error) {
+          return { ok: false, error: formatAuthError(error) }
+        }
+
+        if (!data.user) {
+          return {
+            ok: false,
+            error: "Registration failed. No user created by Supabase.",
           }
+        }
 
-          if (!data.user) {
-            setIsLoading(false)
-            return { ok: false, error: "Registration failed. No user created." }
+        // Supabase identity check: if identities is an empty array, email is already registered
+        if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          return {
+            ok: false,
+            error: "An account with this email already exists. Please sign in instead.",
           }
+        }
 
-          const appUser: User = {
-            id: data.user.id,
-            email: payload.email.trim(),
-            name: payload.name.trim(),
-            university: payload.university,
-            gender: payload.gender,
-          }
+        const appUser: User = {
+          id: data.user.id,
+          email: cleanEmail,
+          name: cleanName,
+          university: payload.university,
+          gender: payload.gender,
+        }
 
-          // Ensure profile entry exists
+        // Check if email confirmation is required (session is null)
+        const requiresVerification = !data.session
+
+        // If session exists right away, upsert profile
+        if (data.session) {
           try {
             await supabase.from("profiles").upsert({
               id: data.user.id,
@@ -285,82 +326,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               university: appUser.university,
               gender: appUser.gender,
             })
-          } catch {
-            // Profile may be handled by PostgreSQL database trigger
+          } catch (profileErr) {
+            console.warn("[RoomieMatch] Note: Profile creation via client upsert skipped/handled by DB trigger:", profileErr)
           }
 
           setUser(appUser)
-          setIsLoading(false)
-          return { ok: true, user: appUser }
-        } catch (err) {
-          setIsLoading(false)
-          return {
-            ok: false,
-            error: err instanceof Error ? err.message : "Unexpected registration error.",
-          }
         }
-      }
 
-      // 2. Local Fallback Mode
-      await fakeDelay(800)
-      const users = getStoredUsers()
-      if (
-        users.some((u) => u.email.toLowerCase() === payload.email.toLowerCase())
-      ) {
-        setIsLoading(false)
+        return {
+          ok: true,
+          user: appUser,
+          requiresEmailVerification: requiresVerification,
+          message: requiresVerification
+            ? "Account created successfully! Please check your email inbox to verify your account before logging in."
+            : undefined,
+        }
+      } catch (err) {
         return {
           ok: false,
-          error: "An account with this email already exists.",
+          error: formatAuthError(err),
         }
+      } finally {
+        setIsSubmitting(false)
       }
-      const newUser: StoredUser = {
-        id: generateLocalId(),
-        name: payload.name,
-        email: payload.email,
-        password: payload.password,
-        university: payload.university,
-        gender: payload.gender,
-      }
-      saveStoredUsers([...users, newUser])
-      const { password: _, ...safeUser } = newUser
-      setUser(safeUser)
-      setIsLoading(false)
-      return { ok: true, user: safeUser }
     },
     []
   )
 
-  // Logout handler
+  // Logout handler using Supabase
   const logout = React.useCallback(async () => {
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.auth.signOut()
-      } catch (err) {
-        console.error("[RoomieMatch] Error signing out:", err)
+    setIsSubmitting(true)
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.auth.signOut()
+        if (error) {
+          console.error("[RoomieMatch] Error during Supabase signOut:", error.message)
+        }
       }
+    } catch (err) {
+      console.error("[RoomieMatch] Unexpected error signing out:", err)
+    } finally {
+      setUser(null)
+      setIsSubmitting(false)
     }
-    setUser(null)
   }, [])
 
-  const value = React.useMemo(
+  const value = React.useMemo<AuthContextValue>(
     () => ({
       user,
       isLoading,
+      isSubmitting,
       isSupabaseConfigured,
       login,
       register,
       logout,
     }),
-    [user, isLoading, login, register, logout]
+    [user, isLoading, isSubmitting, login, register, logout]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const ctx = React.useContext(AuthContext)
   if (ctx === undefined) {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return ctx
 }
+

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { cookieStorage, clearAuthTokensFromLocalStorage } from "./cookie-storage"
 
 export type Profile = {
   id: string
@@ -116,17 +117,25 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || ""
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
     supabaseAnonKey &&
-    supabaseUrl !== "https://your-project-id.supabase.co" &&
-    supabaseAnonKey !== "your-anon-public-key"
+    supabaseUrl.startsWith("https://") &&
+    !supabaseUrl.includes("your-project") &&
+    !supabaseUrl.includes("placeholder") &&
+    !supabaseAnonKey.includes("your-anon") &&
+    !supabaseAnonKey.includes("placeholder")
 )
 
 // Fallback placeholder URL to prevent createClient throwing on instantiation during initial dev/preview
 const validUrl = isSupabaseConfigured ? supabaseUrl : "https://placeholder.supabase.co"
 const validKey = isSupabaseConfigured ? supabaseAnonKey : "placeholder-anon-key"
 
+// Immediately purge any access tokens lingering in browser localStorage
+clearAuthTokensFromLocalStorage()
+
 export const supabase = createClient<Database>(validUrl, validKey, {
   auth: {
     persistSession: true,
+    storage: cookieStorage,
+    storageKey: "sb-auth-token",
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
