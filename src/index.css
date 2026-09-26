@@ -86,6 +86,7 @@
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   /* Gabarito ships no italic — emphasise with weight and colour, not `italic`. */
   --font-heading: "Gabarito Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", "Playfair Display", Georgia, Cambria, "Times New Roman", Times, serif;
 
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);

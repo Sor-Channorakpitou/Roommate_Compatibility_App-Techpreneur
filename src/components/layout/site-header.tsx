@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { toast } from "sonner"
-import { Home, LogOut, Menu, MessageSquare, User, X } from "lucide-react"
+import { Home, LogOut, Menu, PlusCircle, User, X } from "lucide-react"
 import { cn } from "cn"
 
 import { useAuth } from "@/context/auth-context"
@@ -39,29 +39,13 @@ function NavItem({ link }: { link: NavLink }) {
 
 function ActionButtons() {
   return (
-    <>
-      <Button
-        nativeButton={false}
-        variant="ghost"
-        size="pill-xs"
-        className="bg-muted text-foreground hover:bg-muted/70"
-        render={<Link to="/messages" />}
-      >
-        <MessageSquare />
-        Messages
-        <span aria-hidden className="ml-0.5 size-2 rounded-full bg-primary" />
-        <span className="sr-only">(unread messages)</span>
-      </Button>
-      <Button
-        nativeButton={false}
-        variant="brand-outline"
-        size="pill-xs"
-        className="px-[1.0625rem]"
-        render={<Link to="/rooms/new" />}
-      >
-        Create Room
-      </Button>
-    </>
+    <Link
+      to="/rooms/new"
+      className="inline-flex items-center gap-1.5 rounded-full bg-[#7a3418] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#682c14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7a3418]"
+    >
+      <PlusCircle className="size-4" />
+      Create Room
+    </Link>
   )
 }
 
@@ -119,17 +103,13 @@ function UserMenu({ className }: { className?: string }) {
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="User profile menu"
-        className="flex size-9 items-center justify-center rounded-full border border-foreground/30 text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative flex size-9 items-center justify-center rounded-full bg-[#f6eee7] text-xs font-semibold text-[#55433c] transition-colors hover:bg-[#ebdccf] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {user ? (
-          <Avatar size="sm">
-            <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
-              {getInitials(user.name)}
-            </AvatarFallback>
-          </Avatar>
-        ) : (
-          <User className="size-4 text-foreground/80" />
-        )}
+        <span>{user ? getInitials(user.name) : "MH"}</span>
+        <span
+          className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-600 ring-2 ring-white"
+          aria-hidden="true"
+        />
       </button>
 
       <div
@@ -263,23 +243,9 @@ function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-6 lg:flex">
-
+        <div className="hidden items-center gap-4 lg:flex">
           <ActionButtons />
-
-          {user ? (
-            <UserMenu />
-          ) : (
-            <Button
-              nativeButton={false}
-              variant="ghost"
-              size="pill-xs"
-              className="text-foreground"
-              render={<Link to="/sign-in" />}
-            >
-              Sign In
-            </Button>
-          )}
+          <UserMenu />
         </div>
 
         <Button

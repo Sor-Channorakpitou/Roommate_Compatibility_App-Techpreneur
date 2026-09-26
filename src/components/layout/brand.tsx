@@ -45,6 +45,10 @@ function Brand({
       >
         {siteConfig.name}
       </span>
+      <span className="hidden md:inline-block h-4 w-px bg-border/80 mx-1" aria-hidden="true" />
+      <span className="hidden md:inline-block text-xs font-normal text-muted-foreground tracking-normal">
+        Harmonious Co-Living Phnom Penh
+      </span>
     </a>
   )
 }

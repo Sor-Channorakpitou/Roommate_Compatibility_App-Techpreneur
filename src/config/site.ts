@@ -27,8 +27,9 @@ export const siteConfig = {
 
 export const mainNav: NavLink[] = [
   { label: "Home", href: "/" },
-  { label: "Browse", href: "/browse" },
+  { label: "Find Roommates", href: "/find-roommates" },
   { label: "My Home", href: "/my-home" },
+  { label: "Messages", href: "/messages" },
 ]
 
 export const quickLinks: IconNavLink[] = [

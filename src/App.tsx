@@ -9,6 +9,7 @@ import { FindRoommatesPage } from "@/features/find-roommates"
 import { LandingPage } from "@/features/landingpage"
 import { MessagesPage } from "@/features/messages"
 import { MyHomePage } from "@/features/my-home"
+import { CreateRoomPage } from "@/features/create-room"
 
 export function App() {
   return (
@@ -32,6 +33,8 @@ export function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/compatibility-test" element={<CompatibilityPage />} />
             <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/rooms/new" element={<CreateRoomPage />} />
+            <Route path="/create-room" element={<CreateRoomPage />} />
           </Routes>
         </main>
         <SiteFooter />
