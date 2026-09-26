@@ -7,7 +7,7 @@ import type { RoommateListing } from "../data/roommates-data"
 type RoommateCardProps = {
   profile: RoommateListing
   onSeeBreakdown: (profile: RoommateListing) => void
-  onSendMatch: (profile: RoommateListing) => void
+  onSendMatch: (profile: RoommateListing) => void | Promise<boolean>
 }
 
 export function RoommateCard({
@@ -16,12 +16,18 @@ export function RoommateCard({
   onSendMatch,
 }: RoommateCardProps) {
   const [isConnected, setIsConnected] = React.useState(Boolean(profile.connected))
+  const [isConnecting, setIsConnecting] = React.useState(false)
 
-  const handleConnectClick = () => {
-    if (!isConnected) {
-      setIsConnected(true)
-      onSendMatch(profile)
-    }
+  React.useEffect(() => {
+    setIsConnected(Boolean(profile.connected))
+  }, [profile.connected])
+
+  const handleConnectClick = async () => {
+    if (isConnected || isConnecting) return
+    setIsConnecting(true)
+    const result = await onSendMatch(profile)
+    setIsConnecting(false)
+    if (result !== false) setIsConnected(true)
   }
 
   const isPlace = profile.type === "place"
@@ -52,7 +58,7 @@ export function RoommateCard({
 
   // Top-right badge styling matching Browse.png
   const renderRightBadge = () => {
-    if (profile.matchScore) {
+    if (profile.matchScore != null) {
       const isHigh = profile.matchScore >= 85
       return (
         <span
@@ -82,11 +88,17 @@ export function RoommateCard({
     <div className="group flex flex-col overflow-hidden rounded-[22px] border border-[#e8dfd2] dark:border-stone-800 bg-white dark:bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       {/* Top Image Container */}
       <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-[#e8dfd2] dark:bg-stone-800">
-        <img
-          src={profile.image}
-          alt={profile.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        {profile.image ? (
+          <img
+            src={profile.image}
+            alt={profile.name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#f2dfcf] to-[#dfc3ac] text-[#7a3418]">
+            <Home className="size-12 opacity-70" aria-hidden="true" />
+          </div>
+        )}
 
         {/* Top Badges */}
         <div className="absolute top-3.5 left-3.5 z-10">{renderTypeBadge()}</div>
@@ -171,9 +183,10 @@ export function RoommateCard({
             <button
               type="button"
               onClick={handleConnectClick}
+              disabled={isConnecting}
               className="rounded-full bg-[#5c2005] hover:bg-[#481903] active:scale-98 px-5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c2005]"
             >
-              {isPlace ? "Inquire / Apply" : "Connect"}
+              {isConnecting ? "Sending…" : isPlace ? "Inquire / Apply" : "Connect"}
             </button>
           )}
         </div>

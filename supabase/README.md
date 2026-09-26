@@ -31,21 +31,23 @@ This project is configured to use [Supabase](https://supabase.com) for authentic
 
 ---
 
-## 3. Run the Database Schema
+## 3. Apply Database Migrations
 
-1. In your Supabase Dashboard, click on **SQL Editor** in the left sidebar.
-2. Click **New query**.
-3. Copy the entire contents of [`supabase/schema.sql`](./schema.sql).
-4. Paste it into the SQL Editor and click **Run**.
-5. You should see `Success. No rows returned`.
+The app's current schema is defined by the timestamped files in
+[`supabase/migrations`](./migrations). Apply them in order so profile
+preferences, user listings, mutual-interest requests, and chat permissions are
+all created consistently.
 
-This will:
-- Create the `profiles` table.
-- Create the `compatibility_responses` table.
-- Create the `messages` table.
-- Configure automatic user sync on signup via PostgreSQL triggers (`on_auth_user_created`).
-- Set up Row Level Security (RLS) policies.
-- Enable Supabase Realtime for messages.
+With the Supabase CLI installed and this project linked to your Supabase
+project, run:
+
+```bash
+supabase db push
+```
+
+For the SQL Editor, run the migration files in timestamp order. Do not use the
+older [`schema.sql`](./schema.sql) as a replacement; it predates the current
+listing and matching schema.
 
 ---
 

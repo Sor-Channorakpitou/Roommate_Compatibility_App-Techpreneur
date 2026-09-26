@@ -37,9 +37,11 @@ export type RoommateListing = {
   availableDate: string // "Avail Nov 15"
   quote: string
   tags: string[]
-  image: string
+  image?: string
   avatarImage?: string
   connected?: boolean
+  ownerId?: string
+  ownerName?: string
   roommatesCountText?: string // e.g. "2 current roommates • Creative & balanced rhythm"
   housingType: "all" | "private-bath" | "entire-flat" | "room-available"
   areaCategory: "bkk" | "daun-penh" | "russian-market" | "toul-kork"

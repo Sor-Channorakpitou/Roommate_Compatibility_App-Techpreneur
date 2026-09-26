@@ -203,7 +203,11 @@ function CompatibilityPage() {
         toast.error("Supabase is not configured", { description: "Add the environment variables in .env.local before saving answers." })
         return
       }
-      const responses = QUESTIONS.map((item, index) => ({ category: item.category, answer: selections[index], subAnswer: subSelections[index] || null }))
+      const responses = QUESTIONS.map((item, index) => ({
+        category: item.category,
+        answer: item.options.find((option) => option.id === selections[index])?.label || selections[index],
+        subAnswer: item.subGroup?.options.find((option) => option.id === subSelections[index])?.label || null,
+      }))
       const { error } = await getSupabase().from("compatibility_responses").insert({ user_id: user.id, responses })
       if (error) {
         toast.error("Could not save your answers", { description: error.message })
@@ -213,7 +217,7 @@ function CompatibilityPage() {
         description:
           "Your preferences have been saved. Directing to home page...",
       })
-      navigate("/")
+      navigate("/profile#preferences")
     } else {
       setCurrentIndex((i) => i + 1)
     }
