@@ -30,11 +30,13 @@ export function EditPreferencesModal({
   currentPreferences,
   onSavePreferences,
 }: EditPreferencesModalProps) {
+  const [prevPreferences, setPrevPreferences] = React.useState(currentPreferences)
   const [selected, setSelected] = React.useState<LivingPreference[]>(currentPreferences)
 
-  React.useEffect(() => {
+  if (prevPreferences !== currentPreferences) {
+    setPrevPreferences(currentPreferences)
     setSelected(currentPreferences)
-  }, [currentPreferences])
+  }
 
   if (!isOpen) return null
 
