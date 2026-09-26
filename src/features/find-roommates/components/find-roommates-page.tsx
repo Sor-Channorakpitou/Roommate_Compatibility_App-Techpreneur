@@ -1,5 +1,5 @@
 import React from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowRight,
   Check,
@@ -23,8 +23,44 @@ import {
 import { FilterSidebar } from "./filter-sidebar"
 import { RoommateCard } from "./roommate-card"
 import { ViewDetailDialog } from "./view-detail-dialog"
+import { isSupabaseConfigured, supabase, type ListingRow } from "@/lib/supabase"
+import { useAuth } from "@/context/auth-context"
+
+function toRoommateListing(row: ListingRow, compatibilityScore?: number): RoommateListing {
+  return {
+    id: row.id,
+    type: row.type,
+    badgeLabel: row.badge_label,
+    name: row.name,
+    age: row.age ?? undefined,
+    // Scores for user listings come only from the private-answer RPC below.
+    matchScore: row.owner_id ? compatibilityScore : row.match_score ?? undefined,
+    priceDisplay: `$${row.price_min}–${row.price_max}/mo`,
+    priceMin: row.price_min,
+    priceMax: row.price_max,
+    subtitle: row.subtitle,
+    location: row.location,
+    availableDate: row.available_date,
+    quote: row.quote,
+    tags: row.tags || [],
+    image: undefined,
+    housingType: row.housing_type as RoommateListing["housingType"],
+    areaCategory: row.area_category as RoommateListing["areaCategory"],
+    lifestyleRhythms: row.lifestyle_rhythms || [],
+    moveInHorizon: row.move_in_horizon as RoommateListing["moveInHorizon"],
+    habitComparisons: row.habit_comparisons as RoommateListing["habitComparisons"],
+    breakdown: row.breakdown as RoommateListing["breakdown"],
+    bio: row.bio || undefined,
+    ownerId: row.owner_id || undefined,
+    ownerName: row.owner_name || undefined,
+  }
+}
 
 export function FindRoommatesPage() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [listings, setListings] = React.useState(ROOMMATES_LISTINGS)
+  const [requestedListingIds, setRequestedListingIds] = React.useState<Set<string>>(new Set())
   const [filters, setFilters] = React.useState<FilterState>({
     categoryTab: "roommates",
     searchQuery: "",
@@ -40,6 +76,35 @@ export function FindRoommatesPage() {
     React.useState<RoommateListing | null>(null)
   const [toastMessage, setToastMessage] = React.useState<string | null>(null)
   const [isMobileFilterOpen, setIsMobileFilterOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!isSupabaseConfigured) return
+    let active = true
+    async function loadListings() {
+      const [{ data, error }, interestResult] = await Promise.all([
+        supabase.from("roommate_listings").select("*").eq("is_published", true).order("created_at", { ascending: false }),
+        user ? supabase.from("listing_interests").select("listing_id").eq("interested_user_id", user.id) : Promise.resolve({ data: [], error: null }),
+      ])
+      if (!active) return
+      if (error) return
+      const scoreResult = user
+        ? await supabase.rpc("get_listing_compatibility_scores")
+        : { data: [], error: null }
+      if (!active) return
+      const compatibilityScores = new Map(
+        (scoreResult.data || []).map((score) => [score.listing_id, score.match_score]),
+      )
+      const requested = new Set((interestResult.data || []).map((interest) => interest.listing_id))
+      setRequestedListingIds(requested)
+      const combined = [
+        ...(data || []).map((row) => toRoommateListing(row, compatibilityScores.get(row.id))),
+        ...ROOMMATES_LISTINGS,
+      ]
+      setListings([...new Map(combined.map((listing) => [listing.id, { ...listing, connected: requested.has(listing.id) }])).values()])
+    }
+    void loadListings()
+    return () => { active = false }
+  }, [user])
 
   // Clear toast after 4 seconds
   React.useEffect(() => {
@@ -64,7 +129,7 @@ export function FindRoommatesPage() {
 
   // Filter listings
   const filteredListings = React.useMemo(() => {
-    return ROOMMATES_LISTINGS.filter((item) => {
+    return listings.filter((item) => {
       // Category scope tab
       if (filters.categoryTab === "roommates") {
         if (item.type !== "roommate" && item.type !== "has_room") return false
@@ -128,21 +193,56 @@ export function FindRoommatesPage() {
       // move-in sort
       return a.availableDate.localeCompare(b.availableDate)
     })
-  }, [filters])
+  }, [filters, listings])
 
-  const handleSendMatch = (profile: RoommateListing) => {
-    const isPlace = profile.type === "place"
-    setToastMessage(
-      isPlace
-        ? `Inquiry sent for ${profile.name}!`
-        : `Match request sent to ${profile.name}!`
-    )
+  const handleSendMatch = async (profile: RoommateListing): Promise<boolean> => {
+    if (!user) {
+      navigate("/sign-in")
+      return false
+    }
+    if (!isSupabaseConfigured) {
+      setToastMessage("Connect Supabase to send a real interest request.")
+      return false
+    }
+    if (!profile.ownerId) {
+      setToastMessage("This sample listing can’t receive requests yet.")
+      return false
+    }
+    if (profile.ownerId === user.id) {
+      setToastMessage("This is your own listing.")
+      return false
+    }
+    if (requestedListingIds.has(profile.id)) {
+      setToastMessage("You already sent an interest request for this listing.")
+      return false
+    }
+
+    const { error } = await supabase.from("listing_interests").insert({
+      listing_id: profile.id,
+      interested_user_id: user.id,
+      owner_id: profile.ownerId,
+      interested_name: user.name,
+      owner_name: profile.ownerName || profile.name,
+      listing_name: profile.name,
+      listing_location: profile.location,
+      price_min: profile.priceMin,
+      price_max: profile.priceMax,
+      available_date: profile.availableDate,
+    })
+    if (error) {
+      setToastMessage(error.code === "23505" ? "You already sent an interest request for this listing." : error.message)
+      return false
+    }
+    setRequestedListingIds((current) => new Set(current).add(profile.id))
+    setListings((current) => current.map((listing) => listing.id === profile.id ? { ...listing, connected: true } : listing))
+    setToastMessage("Interest sent! We’ll let you know when the owner responds.")
+    return true
   }
 
   // Count tallies for top switcher tabs
-  const totalMatchesCount = ROOMMATES_LISTINGS.length + 6 // 12 in mockup
-  const roommatesCount = 7 // matching mockup
-  const placesCount = 5 // matching mockup
+  const totalMatchesCount = listings.length
+  const roommatesCount = listings.filter((listing) => listing.type !== "place").length
+  const placesCount = listings.filter((listing) => listing.type === "place").length
 
   return (
     <div className="min-h-screen bg-[#faf8f4] dark:bg-background text-foreground pb-20 pt-6">
@@ -355,7 +455,7 @@ export function FindRoommatesPage() {
                 {filteredListings.map((listing) => (
                   <RoommateCard
                     key={listing.id}
-                    profile={listing}
+                    profile={{ ...listing, connected: listing.connected || requestedListingIds.has(listing.id) }}
                     onSeeBreakdown={setSelectedProfile}
                     onSendMatch={handleSendMatch}
                   />

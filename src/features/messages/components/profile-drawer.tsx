@@ -54,7 +54,7 @@ export function ProfileDrawer({
         </div>
 
         <h3 className="mt-3 font-heading text-lg font-bold text-foreground">
-          {conversation.name}, {conversation.age}
+          {conversation.name}{conversation.age > 0 ? `, ${conversation.age}` : ""}
         </h3>
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="size-3" />
@@ -65,24 +65,19 @@ export function ProfileDrawer({
       {/* Compatibility Box */}
       <div className="mt-6 rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-foreground">Compatibility</span>
+          <span className="text-xs font-bold text-foreground">{conversation.isRealMatch ? "Connection" : "Compatibility"}</span>
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
-            {conversation.matchScore}% match
+            {conversation.isRealMatch ? "Mutual interest" : `${conversation.matchScore}% match`}
           </span>
         </div>
-        <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-emerald-200/60 dark:bg-emerald-900/40">
-          <div
-            className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-            style={{ width: `${conversation.matchScore}%` }}
-          />
-        </div>
-        <p className="mt-2 text-[0.75rem] leading-snug text-muted-foreground">
-          Strong alignment on noise tolerance, schedule, and guest policies.
-        </p>
+        {conversation.isRealMatch ? <p className="mt-2.5 text-[0.75rem] leading-snug text-muted-foreground">Both of you are interested. Use chat to learn more and arrange a meeting.</p> : <>
+          <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-emerald-200/60 dark:bg-emerald-900/40"><div className="h-full rounded-full bg-emerald-600 transition-all duration-500" style={{ width: `${conversation.matchScore}%` }} /></div>
+          <p className="mt-2 text-[0.75rem] leading-snug text-muted-foreground">Strong alignment on noise tolerance, schedule, and guest policies.</p>
+        </>}
       </div>
 
       {/* Key Habits */}
-      <div className="mt-6">
+      {conversation.keyHabits.length > 0 && <div className="mt-6">
         <h4 className="text-[0.6875rem] font-bold uppercase tracking-wider text-muted-foreground">
           Key Habits
         </h4>
@@ -96,7 +91,7 @@ export function ProfileDrawer({
             </span>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Details Grid */}
       <div className="mt-6 space-y-2.5 border-t border-border/40 pt-4 text-xs">

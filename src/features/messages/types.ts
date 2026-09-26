@@ -24,6 +24,10 @@ export type Conversation = {
   keyHabits: string[]
   unread: boolean
   isRoomRequest?: boolean
+  isRealMatch?: boolean
+  interestId?: string
+  otherUserId?: string
+  requestDirection?: "incoming" | "outgoing"
   lastMessageTime: string
   lastMessageText: string
   messages: Message[]

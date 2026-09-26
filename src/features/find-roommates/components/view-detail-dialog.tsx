@@ -65,11 +65,17 @@ export function ViewDetailDialog({
           {/* Avatar & Name */}
           <div className="flex items-center gap-3.5">
             <div className="size-13 sm:size-14 shrink-0 overflow-hidden rounded-full ring-2 ring-[#e4ddd4] dark:ring-stone-700 shadow-xs">
-              <img
-                src={profile.avatarImage || profile.image}
-                alt={profile.name}
-                className="h-full w-full object-cover"
-              />
+              {profile.avatarImage || profile.image ? (
+                <img
+                  src={profile.avatarImage || profile.image}
+                  alt={profile.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#f2dfcf] font-semibold text-[#7a3418]">
+                  {profile.name.slice(0, 2).toUpperCase()}
+                </div>
+              )}
             </div>
 
             <div>
@@ -87,7 +93,7 @@ export function ViewDetailDialog({
           </div>
 
           {/* Match Score & Rating Badge */}
-          {profile.matchScore ? (
+          {profile.matchScore != null ? (
             <div className="text-right shrink-0">
               <div className="font-serif text-3xl sm:text-4xl font-normal leading-none text-[#205826] dark:text-emerald-400">
                 {profile.matchScore}%
@@ -109,12 +115,22 @@ export function ViewDetailDialog({
         </div>
 
         {/* Green Sync Bar */}
-        <div className="mt-6 mb-7 h-1.5 w-full overflow-hidden rounded-full bg-[#ece7dd] dark:bg-stone-800">
-          <div
-            className="h-full rounded-full bg-[#24612b] transition-all duration-700 ease-out"
-            style={{ width: `${profile.matchScore ?? 92}%` }}
-          />
-        </div>
+        {profile.matchScore != null ? (
+          <div className="mt-6 mb-7 h-1.5 w-full overflow-hidden rounded-full bg-[#ece7dd] dark:bg-stone-800">
+            <div
+              className="h-full rounded-full bg-[#24612b] transition-all duration-700 ease-out"
+              style={{ width: `${profile.matchScore}%` }}
+            />
+          </div>
+        ) : profile.ownerId ? (
+          <p className="mt-5 mb-6 rounded-xl bg-[#faf7f2] px-4 py-3 text-xs text-[#6e6357] dark:bg-stone-900 dark:text-stone-300">
+            Compatibility appears after both people complete the living-style quiz.
+          </p>
+        ) : (
+          <div className="mt-6 mb-7 h-1.5 w-full overflow-hidden rounded-full bg-[#ece7dd] dark:bg-stone-800">
+            <div className="h-full rounded-full bg-[#24612b]" style={{ width: "92%" }} />
+          </div>
+        )}
 
         {/* Comparison Table matching view_detail.png */}
         <div className="overflow-hidden">

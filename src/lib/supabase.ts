@@ -7,10 +7,8 @@ export type Profile = {
   name: string
   university: string
   gender: string
-  bio: string | null
-  avatar_url: string | null
   created_at: string
-  updated_at: string
+  housing_preferences: Record<string, unknown> | null
 }
 
 export type CompatibilityResponse = {
@@ -21,11 +19,55 @@ export type CompatibilityResponse = {
 }
 
 export type Message = {
-  id: string
+  id: string | number
+  interest_id: string
   sender_id: string
   receiver_id: string
   content: string
   read: boolean
+  created_at: string
+}
+
+export type ListingRow = {
+  id: string
+  type: "roommate" | "place" | "has_room"
+  badge_label: string
+  name: string
+  age: number | null
+  match_score: number | null
+  price_min: number
+  price_max: number
+  subtitle: string
+  location: string
+  available_date: string
+  quote: string
+  tags: string[]
+  housing_type: string
+  area_category: string
+  lifestyle_rhythms: string[]
+  move_in_horizon: string
+  bio: string | null
+  habit_comparisons: Array<Record<string, unknown>>
+  breakdown: Array<Record<string, unknown>>
+  owner_id: string | null
+  owner_name: string | null
+  is_published: boolean
+  created_at: string
+}
+
+export type ListingInterest = {
+  id: string
+  listing_id: string
+  interested_user_id: string
+  owner_id: string
+  interested_name: string
+  owner_name: string
+  listing_name: string
+  listing_location: string
+  price_min: number
+  price_max: number
+  available_date: string
+  status: "pending" | "accepted" | "declined"
   created_at: string
 }
 
@@ -60,10 +102,8 @@ export type Database = {
           name: string
           university?: string
           gender?: string
-          bio?: string | null
-          avatar_url?: string | null
           created_at?: string
-          updated_at?: string
+          housing_preferences?: Record<string, unknown> | null
         }
         Update: Partial<{
           id: string
@@ -71,9 +111,7 @@ export type Database = {
           name: string
           university: string
           gender: string
-          bio: string | null
-          avatar_url: string | null
-          updated_at: string
+          housing_preferences: Record<string, unknown> | null
         }>
         Relationships: []
       }
@@ -93,10 +131,42 @@ export type Database = {
         }>
         Relationships: []
       }
+      roommate_listings: {
+        Row: ListingRow
+        Insert: {
+          id: string
+          type: ListingRow["type"]
+          badge_label: string
+          name: string
+          age?: number | null
+          match_score?: number | null
+          price_min: number
+          price_max: number
+          subtitle: string
+          location: string
+          available_date: string
+          quote: string
+          tags?: string[]
+          housing_type: string
+          area_category: string
+          lifestyle_rhythms?: string[]
+          move_in_horizon: string
+          bio?: string | null
+          habit_comparisons?: Array<Record<string, unknown>>
+          breakdown?: Array<Record<string, unknown>>
+          owner_id: string
+          owner_name?: string | null
+          is_published?: boolean
+          created_at?: string
+        }
+        Update: Partial<Omit<ListingRow, "id" | "created_at">>
+        Relationships: []
+      }
       messages: {
         Row: Message
         Insert: {
-          id?: string
+          id?: string | number
+          interest_id: string
           sender_id: string
           receiver_id: string
           content: string
@@ -104,13 +174,20 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<{
-          id: string
+          id: string | number
+          interest_id: string
           sender_id: string
           receiver_id: string
           content: string
           read: boolean
           created_at: string
         }>
+        Relationships: []
+      }
+      listing_interests: {
+        Row: ListingInterest
+        Insert: Omit<ListingInterest, "id" | "created_at" | "status"> & { id?: string; created_at?: string; status?: ListingInterest["status"] }
+        Update: Partial<ListingInterest>
         Relationships: []
       }
       rooms: {
@@ -137,7 +214,12 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      get_listing_compatibility_scores: {
+        Args: Record<PropertyKey, never>
+        Returns: Array<{ listing_id: string; match_score: number }>
+      }
+    }
   }
 }
 

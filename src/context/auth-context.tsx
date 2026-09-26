@@ -32,6 +32,8 @@ export type AuthResult = {
   message?: string
 }
 
+export type ProfileUpdate = Pick<User, "name" | "university" | "gender">
+
 type AuthContextValue = {
   user: User | null
   /** True while initially verifying existing session with Supabase on app startup */
@@ -41,6 +43,7 @@ type AuthContextValue = {
   isSupabaseConfigured: boolean
   login: (email: string, password: string) => Promise<AuthResult>
   register: (payload: RegisterPayload) => Promise<AuthResult>
+  updateProfile: (payload: ProfileUpdate) => Promise<AuthResult>
   logout: () => Promise<void>
 }
 
@@ -353,6 +356,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   )
 
+  const updateProfile = React.useCallback(
+    async (payload: ProfileUpdate): Promise<AuthResult> => {
+      if (!user) return { ok: false, error: "Please sign in before editing your profile." }
+      if (!isSupabaseConfigured) {
+        return { ok: false, error: "Supabase is not configured. Check your .env.local settings." }
+      }
+
+      setIsSubmitting(true)
+      try {
+        const profile = {
+          name: payload.name.trim(),
+          university: payload.university.trim(),
+          gender: payload.gender,
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .update(profile)
+          .eq("id", user.id)
+          .select("id")
+          .maybeSingle()
+
+        if (error) return { ok: false, error: formatAuthError(error) }
+        if (!data) {
+          return {
+            ok: false,
+            error: "Your profile record was not found. Please sign out and sign in again.",
+          }
+        }
+
+        const updatedUser = { ...user, ...profile }
+        setUser(updatedUser)
+        return { ok: true, user: updatedUser }
+      } catch (err) {
+        return { ok: false, error: formatAuthError(err) }
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [user]
+  )
+
   // Logout handler using Supabase
   const logout = React.useCallback(async () => {
     setIsSubmitting(true)
@@ -379,9 +424,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSupabaseConfigured,
       login,
       register,
+      updateProfile,
       logout,
     }),
-    [user, isLoading, isSubmitting, login, register, logout]
+    [user, isLoading, isSubmitting, login, register, updateProfile, logout]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

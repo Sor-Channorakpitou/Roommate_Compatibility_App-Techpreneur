@@ -163,7 +163,7 @@ export function InboxSidebar({
                       </span>
                     ) : (
                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[0.6875rem] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                        {conv.matchScore}% match
+                        {conv.isRealMatch ? "Mutual interest" : `${conv.matchScore}% match`}
                       </span>
                     )}
                     <span className="text-[0.6875rem] text-muted-foreground">

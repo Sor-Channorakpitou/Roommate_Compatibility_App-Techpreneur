@@ -10,7 +10,7 @@ import { FindRoommatesPage } from "@/features/find-roommates"
 import { LandingPage } from "@/features/landingpage"
 import { MessagesPage } from "@/features/messages"
 import { MyHomePage } from "@/features/my-home"
-import { ProfilePage } from "@/features/profile"
+import { CreateListingPage, ProfilePage } from "@/features/profile"
 import { MyRoomsPage } from "@/features/my-rooms"
 
 export function App() {
@@ -34,6 +34,7 @@ export function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/rooms" element={<MyRoomsPage />} />
             <Route path="/rooms/new" element={<CreateRoomPage />} />
+            <Route path="/listings/new" element={<CreateListingPage />} />
             <Route path="/sign-in" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/compatibility-test" element={<CompatibilityPage />} />
