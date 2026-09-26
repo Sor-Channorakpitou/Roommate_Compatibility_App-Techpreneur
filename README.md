@@ -13,6 +13,22 @@ npm run lint       # eslint
 npm run format     # prettier (incl. Tailwind class sorting)
 ```
 
+## Supabase
+
+This branch uses Supabase Auth for registration/sign-in and stores completed
+compatibility tests in Postgres. It also includes a listings schema and seed data
+derived from `src/features/find-roommates/data/roommates-data.ts`.
+
+1. Create a Supabase project, then copy `.env.example` to `.env.local`.
+2. In **Project Settings → API**, set `VITE_SUPABASE_URL` and the browser-safe
+   `VITE_SUPABASE_PUBLISHABLE_KEY`. Never expose a `service_role` or secret key in Vite.
+3. Run `supabase db push` (or paste the migration into the SQL Editor), then run
+   `supabase db reset` locally or execute `supabase/seed.sql`.
+4. In **Authentication → URL Configuration**, add `http://localhost:5173` as a redirect URL.
+
+Until environment values are configured, the app deliberately does not fall back
+to localStorage authentication.
+
 ## Folder structure
 
 ```

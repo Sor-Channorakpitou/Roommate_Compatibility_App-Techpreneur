@@ -226,6 +226,13 @@ function RegisterPage() {
       gender,
     })
     if (result.ok) {
+      if (result.needsEmailConfirmation) {
+        toast.success("Check your email to confirm your account", {
+          description: "After confirming, return here and sign in.",
+        })
+        navigate("/sign-in")
+        return
+      }
       toast.success(`Welcome to RoomieMatch, ${name}!`, {
         description:
           "Your account is created. Let's start your compatibility quiz!",

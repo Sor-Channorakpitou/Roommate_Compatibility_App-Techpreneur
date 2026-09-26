@@ -76,121 +76,20 @@ function getInitials(name: string) {
 }
 
 function UserMenu({ className }: { className?: string }) {
-  const { user, logout } = useAuth()
-  const [isOpen, setIsOpen] = React.useState(false)
-  const menuRef = React.useRef<HTMLDivElement>(null)
-
-  React.useEffect(() => {
-    if (!isOpen) return
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [isOpen])
-
-  React.useEffect(() => {
-    if (!isOpen) return
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setIsOpen(false)
-    }
-    document.addEventListener("keydown", handleKey)
-    return () => document.removeEventListener("keydown", handleKey)
-  }, [isOpen])
-
-  function handleLogout() {
-    logout()
-    setIsOpen(false)
-    toast.success("Signed out successfully", {
-      description: "See you next time!",
-    })
-  }
-
-  const displayName = user ? user.name : "Sopheak Chan"
-  const displayEmail = user ? user.email : "sopheak.chan@student.edu.kh"
-
+  const { user } = useAuth()
   return (
-    <div ref={menuRef} className={cn("relative", className)}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((o) => !o)}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-        aria-label="User profile menu"
+    <div className={cn("relative", className)}>
+      <Link
+        to="/profile"
+        aria-label="View my profile"
         className="flex size-9 items-center justify-center rounded-full border border-foreground/30 text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {user ? (
-          <Avatar size="sm">
-            <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
-              {getInitials(user.name)}
-            </AvatarFallback>
-          </Avatar>
-        ) : (
-          <User className="size-4 text-foreground/80" />
-        )}
-      </button>
-
-      <div
-        className={cn(
-          "absolute top-full right-0 z-50 mt-2 w-52 origin-top-right rounded-xl bg-card p-1.5 shadow-floating ring-1 ring-foreground/10 transition-all duration-200 ease-out",
-          isOpen
-            ? "visible scale-100 opacity-100"
-            : "pointer-events-none invisible scale-95 opacity-0"
-        )}
-        role="menu"
-      >
-        <div className="px-3 py-2.5">
-          <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
-          <p className="truncate text-xs text-muted-foreground">{displayEmail}</p>
-        </div>
-
-        <div className="mx-2 h-px bg-border/60" />
-
-        <Link
-          to="/my-home"
-          role="menuitem"
-          onClick={() => setIsOpen(false)}
-          className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
-        >
-          <Home className="size-4 text-muted-foreground" />
-          My Home
-        </Link>
-        <Link
-          to="/"
-          role="menuitem"
-          onClick={() => setIsOpen(false)}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
-        >
-          <User className="size-4 text-muted-foreground" />
-          Profile
-        </Link>
-
-        <div className="mx-2 my-1 h-px bg-border/60" />
-
-        {user ? (
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleLogout}
-            className="mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/8"
-          >
-            <LogOut className="size-4" />
-            Log Out
-          </button>
-        ) : (
-          <Link
-            to="/sign-in"
-            role="menuitem"
-            onClick={() => setIsOpen(false)}
-            className="mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-primary transition-colors hover:bg-muted"
-          >
-            <User className="size-4" />
-            Sign In / Register
-          </Link>
-        )}
-      </div>
+        <Avatar size="sm">
+          <AvatarFallback className="bg-primary/12 text-xs font-bold text-primary">
+            {getInitials(user?.name ?? "RM")}
+          </AvatarFallback>
+        </Avatar>
+      </Link>
     </div>
   )
 }
@@ -223,7 +122,7 @@ function MobileUserSection() {
         </div>
       </div>
       <Link
-        to="/"
+        to="/profile"
         className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-foreground hover:bg-muted"
       >
         <User className="size-4 text-muted-foreground" />

@@ -33,7 +33,7 @@ function SectionIntro({
         </p>
       ) : null}
     </div>
-  )
+  )  
 }
 
 export { SectionIntro }

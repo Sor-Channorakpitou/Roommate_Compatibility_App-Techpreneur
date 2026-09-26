@@ -9,6 +9,7 @@ import { FindRoommatesPage } from "@/features/find-roommates"
 import { LandingPage } from "@/features/landingpage"
 import { MessagesPage } from "@/features/messages"
 import { MyHomePage } from "@/features/my-home"
+import { ProfilePage } from "@/features/profile"
 
 export function App() {
   return (
@@ -28,6 +29,7 @@ export function App() {
             <Route path="/browse" element={<FindRoommatesPage />} />
             <Route path="/find-roommates" element={<FindRoommatesPage />} />
             <Route path="/my-home" element={<MyHomePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/sign-in" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/compatibility-test" element={<CompatibilityPage />} />

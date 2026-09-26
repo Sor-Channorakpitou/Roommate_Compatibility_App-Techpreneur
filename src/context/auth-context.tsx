@@ -1,162 +1,92 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase"
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export type User = {
-  id: string
-  name: string
-  email: string
-  university: string
-  gender: string
-}
-
-type RegisterPayload = {
-  name: string
-  email: string
-  password: string
-  university: string
-  gender: string
-}
-
+export type User = { id: string; name: string; email: string; university: string; gender: string }
+type RegisterPayload = Omit<User, "id">
+type AuthResult = { ok: boolean; user?: User; error?: string; needsEmailConfirmation?: boolean }
 type AuthContextValue = {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<{ ok: boolean; user?: User; error?: string }>
-  register: (payload: RegisterPayload) => Promise<{ ok: boolean; user?: User; error?: string }>
-  logout: () => void
+  login: (email: string, password: string) => Promise<AuthResult>
+  register: (payload: RegisterPayload & { password: string }) => Promise<AuthResult>
+  logout: () => Promise<void>
 }
-
-// ---------------------------------------------------------------------------
-// Storage helpers
-// ---------------------------------------------------------------------------
-
-const USERS_KEY = "roomiematch_users"
-const SESSION_KEY = "roomiematch_session"
-
-type StoredUser = User & { password: string }
-
-function getStoredUsers(): StoredUser[] {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "[]")
-  } catch {
-    return []
-  }
-}
-
-function saveStoredUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-}
-
-function getSession(): User | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
-  }
-}
-
-function saveSession(user: User | null) {
-  if (user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user))
-  } else {
-    localStorage.removeItem(SESSION_KEY)
-  }
-}
-
-/** Simulate a backend round-trip */
-function fakeDelay(ms = 800) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms))
-}
-
-function generateId() {
-  return `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-}
-
-// ---------------------------------------------------------------------------
-// Context
-// ---------------------------------------------------------------------------
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 
+function profileFromAuthUser(authUser: { id: string; email?: string; user_metadata: Record<string, unknown> }): User {
+  return {
+    id: authUser.id,
+    name: String(authUser.user_metadata.name ?? "RoomieMatch member"),
+    email: authUser.email ?? "",
+    university: String(authUser.user_metadata.university ?? ""),
+    gender: String(authUser.user_metadata.gender ?? "Other"),
+  }
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong. Please try again."
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(getSession)
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [user, setUser] = React.useState<User | null>(null)
+  const [isLoading, setIsLoading] = React.useState(isSupabaseConfigured)
 
-  // Keep localStorage in sync
   React.useEffect(() => {
-    saveSession(user)
-  }, [user])
-
-  const login = React.useCallback(
-    async (email: string, password: string): Promise<{ ok: boolean; user?: User; error?: string }> => {
-      setIsLoading(true)
-      await fakeDelay()
-      const users = getStoredUsers()
-      const match = users.find(
-        (u) =>
-          u.email.toLowerCase() === email.toLowerCase() &&
-          u.password === password
-      )
+    if (!isSupabaseConfigured) return
+    const client = getSupabase()
+    async function loadUser() {
+      const { data } = await client.auth.getUser()
+      setUser(data.user ? profileFromAuthUser(data.user) : null)
       setIsLoading(false)
-      if (!match) return { ok: false, error: "Invalid email or password." }
-      const { password: _, ...safeUser } = match
-      setUser(safeUser)
-      return { ok: true, user: safeUser }
-    },
-    []
-  )
-
-  const register = React.useCallback(
-    async (payload: RegisterPayload): Promise<{ ok: boolean; user?: User; error?: string }> => {
-      setIsLoading(true)
-      await fakeDelay(1000)
-      const users = getStoredUsers()
-      if (
-        users.some((u) => u.email.toLowerCase() === payload.email.toLowerCase())
-      ) {
-        setIsLoading(false)
-        return {
-          ok: false,
-          error: "An account with this email already exists.",
-        }
-      }
-      const newUser: StoredUser = {
-        id: generateId(),
-        name: payload.name,
-        email: payload.email,
-        password: payload.password,
-        university: payload.university,
-        gender: payload.gender,
-      }
-      saveStoredUsers([...users, newUser])
-      const { password: _, ...safeUser } = newUser
-      setUser(safeUser)
+    }
+    void loadUser()
+    const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? profileFromAuthUser(session.user) : null)
       setIsLoading(false)
-      return { ok: true, user: safeUser }
-    },
-    []
-  )
-
-  const logout = React.useCallback(() => {
-    setUser(null)
+    })
+    return () => listener.subscription.unsubscribe()
   }, [])
 
-  const value = React.useMemo(
-    () => ({ user, isLoading, login, register, logout }),
-    [user, isLoading, login, register, logout]
-  )
+  const login = React.useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    if (!isSupabaseConfigured) return { ok: false, error: "Supabase is not configured. Copy .env.example to .env.local first." }
+    setIsLoading(true)
+    try {
+      const { data, error } = await getSupabase().auth.signInWithPassword({ email, password })
+      if (error) return { ok: false, error: error.message }
+      return data.user ? { ok: true, user: profileFromAuthUser(data.user) } : { ok: false, error: "No user was returned by Supabase." }
+    } catch (error) { return { ok: false, error: errorMessage(error) } } finally { setIsLoading(false) }
+  }, [])
 
+  const register = React.useCallback(async ({ password, ...profile }: RegisterPayload & { password: string }): Promise<AuthResult> => {
+    if (!isSupabaseConfigured) return { ok: false, error: "Supabase is not configured. Copy .env.example to .env.local first." }
+    setIsLoading(true)
+    try {
+      const { data, error } = await getSupabase().auth.signUp({
+        email: profile.email,
+        password,
+        options: { data: { name: profile.name, university: profile.university, gender: profile.gender } },
+      })
+      if (error) return { ok: false, error: error.message }
+      if (!data.user) return { ok: false, error: "No user was returned by Supabase." }
+      return { ok: true, user: profileFromAuthUser(data.user), needsEmailConfirmation: !data.session }
+    } catch (error) {
+      return { ok: false, error: errorMessage(error) }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const logout = React.useCallback(async () => {
+    if (isSupabaseConfigured) await getSupabase().auth.signOut()
+  }, [])
+  const value = React.useMemo(() => ({ user, isLoading, login, register, logout }), [user, isLoading, login, register, logout])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
   const ctx = React.useContext(AuthContext)
-  if (ctx === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
+  if (ctx === undefined) throw new Error("useAuth must be used within an AuthProvider")
   return ctx
 }
