@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useLocation, useNavigate, Link } from "react-router-dom"
 import { toast } from "sonner"
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, LogIn } from "lucide-react"
 
@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input"
 function LoginPage() {
   const { login, isSubmitting, user } = useAuth()
   const navigate = useNavigate()
+  // Pages that require sign-in pass `{ from }` so we can send the user back.
+  const location = useLocation()
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? "/"
 
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -19,12 +22,12 @@ function LoginPage() {
   const [error, setError] = React.useState("")
   const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({})
 
-  // If already authenticated, redirect to home
+  // If already authenticated, go where the user was headed (home by default)
   React.useEffect(() => {
     if (user) {
-      navigate("/", { replace: true })
+      navigate(redirectTo, { replace: true })
     }
-  }, [user, navigate])
+  }, [user, navigate, redirectTo])
 
   function validate() {
     const e: Record<string, string> = {}
@@ -59,7 +62,7 @@ function LoginPage() {
       toast.success(`Welcome back, ${result.user?.name ?? "User"}!`, {
         description: "Signed in successfully via Supabase.",
       })
-      navigate("/")
+      navigate(redirectTo, { replace: true })
     } else {
       const msg = result.error ?? "Failed to sign in. Please try again."
       setError(msg)

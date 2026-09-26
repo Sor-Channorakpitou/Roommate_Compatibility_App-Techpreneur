@@ -6,6 +6,7 @@ import {
   Check,
   ChevronRight,
   CircleHelp,
+  DoorOpen,
   LoaderCircle,
   Eye,
   Heart,
@@ -222,6 +223,7 @@ export function ProfilePage() {
             <button type="button" onClick={() => selectTab("profile")} aria-current={activeTab === "profile" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm ${activeTab === "profile" ? "bg-muted font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}><UserRound className="size-4" /> My Profile</button>
             <button type="button" onClick={() => selectTab("preferences")} aria-current={activeTab === "preferences" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm ${activeTab === "preferences" ? "bg-muted font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}><Heart className="size-4" /> Preferences</button>
             <button type="button" onClick={() => selectTab("listings")} aria-current={activeTab === "listings" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm ${activeTab === "listings" ? "bg-muted font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}><Home className="size-4" /> My Listings</button>
+            <Link to="/rooms" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted"><DoorOpen className="size-4" /> My Rooms</Link>
             <button type="button" onClick={() => selectTab("privacy")} aria-current={activeTab === "privacy" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm ${activeTab === "privacy" ? "bg-muted font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}><ShieldCheck className="size-4" /> Privacy &amp; Verification</button>
             <button type="button" onClick={() => selectTab("account")} aria-current={activeTab === "account" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm ${activeTab === "account" ? "bg-muted font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}><LockKeyhole className="size-4" /> Account Settings</button>
           </nav>
@@ -304,7 +306,7 @@ export function ProfilePage() {
           </>}
 
           {activeTab === "listings" && <>
-          <SectionCard id="listings" title="My listings" description="Create a room-seeker or available-room post, preview it, then publish it." action={<Button nativeButton={false} render={<Link to="/rooms/new" />} size="sm"><Plus /> Create listing</Button>}>
+          <SectionCard id="listings" title="My listings" description="Create a room-seeker or available-room post, preview it, then publish it." action={<Button nativeButton={false} render={<Link to="/listings/new" />} size="sm"><Plus /> Create listing</Button>}>
             {listingsLoading ? <p className="text-sm text-muted-foreground">Loading your listings…</p> : myListings.length ? <div className="space-y-2">{myListings.map((listing) => <div key={listing.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-muted/50 p-4"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{listing.name}</p><p className="mt-1 text-xs text-muted-foreground">{listing.badge_label} · {listing.location}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${listing.is_published ? "bg-sage/40 text-sage-foreground" : "bg-accent text-primary"}`}>{listing.is_published ? "Published" : "Draft"}</span>{!listing.is_published && <Button type="button" size="sm" onClick={() => void publishDraft(listing)}><Check /> Publish</Button>}</div>)}</div> : <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">You haven’t published a listing yet. Create a post if you’re looking for a room or have a place available.</div>}
           </SectionCard>
           </>}

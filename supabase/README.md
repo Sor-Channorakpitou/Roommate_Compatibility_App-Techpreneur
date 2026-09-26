@@ -51,7 +51,18 @@ listing and matching schema.
 
 ---
 
-## 4. Auth Settings (Optional Recommended Step)
+## 4. Create the Rooms Table
+
+The Create Room wizard (`/rooms/new`) and My Rooms page (`/rooms`) need one more script.
+
+1. In the **SQL Editor**, open a new query.
+2. Paste the contents of [`supabase/migrations/20260926000000_create_rooms.sql`](./migrations/20260926000000_create_rooms.sql) and click **Run** (or run `supabase db push`).
+
+This creates the `rooms` table with SELECT, INSERT, UPDATE and DELETE policies so each signed-in user can only see and change their own rooms. The script is safe to re-run.
+
+---
+
+## 5. Auth Settings (Optional Recommended Step)
 
 For local development or testing without email confirmation:
 1. In the Supabase dashboard, go to **Authentication** -> **Providers** -> **Email**.

@@ -5,11 +5,13 @@ import { SiteHeader } from "@/components/layout/site-header"
 import { Toaster } from "@/components/ui/sonner"
 import { LoginPage, RegisterPage } from "@/features/auth"
 import { CompatibilityPage } from "@/features/compatibility"
+import { CreateRoomPage } from "@/features/create-room"
 import { FindRoommatesPage } from "@/features/find-roommates"
 import { LandingPage } from "@/features/landingpage"
 import { MessagesPage } from "@/features/messages"
 import { MyHomePage } from "@/features/my-home"
 import { CreateListingPage, ProfilePage } from "@/features/profile"
+import { MyRoomsPage } from "@/features/my-rooms"
 
 export function App() {
   return (
@@ -30,7 +32,9 @@ export function App() {
             <Route path="/find-roommates" element={<FindRoommatesPage />} />
             <Route path="/my-home" element={<MyHomePage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/rooms/new" element={<CreateListingPage />} />
+            <Route path="/rooms" element={<MyRoomsPage />} />
+            <Route path="/rooms/new" element={<CreateRoomPage />} />
+            <Route path="/listings/new" element={<CreateListingPage />} />
             <Route path="/sign-in" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/compatibility-test" element={<CompatibilityPage />} />

@@ -55,7 +55,7 @@ export function CreateListingPage() {
 
   async function saveListing(isPublished: boolean) {
     if (!user) {
-      navigate("/sign-in", { state: { from: "/rooms/new" } })
+      navigate("/sign-in", { state: { from: "/listings/new" } })
       return
     }
     if (!isSupabaseConfigured) {
