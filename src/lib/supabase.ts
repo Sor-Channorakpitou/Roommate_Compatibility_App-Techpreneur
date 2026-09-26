@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js"
+﻿import { createClient } from "@supabase/supabase-js"
 import { cookieStorage, clearAuthTokensFromLocalStorage } from "./cookie-storage"
 
 export type Profile = {
@@ -14,14 +14,10 @@ export type Profile = {
 }
 
 export type CompatibilityResponse = {
-  id: string
+  id: number
   user_id: string
-  answers: Record<string, unknown>
-  sleep_schedule: string | null
-  cleanliness_score: number | null
-  social_habit: string | null
-  study_preference: string | null
-  updated_at: string
+  responses: Array<Record<string, unknown>>
+  completed_at: string
 }
 
 export type Message = {
@@ -64,24 +60,16 @@ export type Database = {
       compatibility_responses: {
         Row: CompatibilityResponse
         Insert: {
-          id?: string
+          id?: number
           user_id: string
-          answers?: Record<string, unknown>
-          sleep_schedule?: string | null
-          cleanliness_score?: number | null
-          social_habit?: string | null
-          study_preference?: string | null
-          updated_at?: string
+          responses: Array<Record<string, unknown>>
+          completed_at?: string
         }
         Update: Partial<{
-          id: string
+          id: number
           user_id: string
-          answers: Record<string, unknown>
-          sleep_schedule: string | null
-          cleanliness_score: number | null
-          social_habit: string | null
-          study_preference: string | null
-          updated_at: string
+          responses: Array<Record<string, unknown>>
+          completed_at: string
         }>
         Relationships: []
       }
@@ -112,7 +100,10 @@ export type Database = {
 }
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || ""
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || ""
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ||
+  ""
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -140,3 +131,12 @@ export const supabase = createClient<Database>(validUrl, validKey, {
     detectSessionInUrl: true,
   },
 })
+
+export function getSupabase() {
+  if (!isSupabaseConfigured) {
+    throw new Error(
+      "Supabase is not configured. Add VITE_SUPABASE_URL and either VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY to .env.local."
+    )
+  }
+  return supabase
+}

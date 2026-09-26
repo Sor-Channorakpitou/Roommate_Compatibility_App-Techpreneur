@@ -6,6 +6,8 @@ import { ArrowLeft, ArrowRight, Moon, Sparkles, Zap } from "lucide-react"
 import { Eyebrow } from "@/components/common/eyebrow"
 import { Container } from "@/components/layout/container"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/auth-context"
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase"
 
 // ---------------------------------------------------------------------------
 // Quiz data (sample questions matching the screenshot aesthetic)
@@ -164,6 +166,7 @@ const QUESTIONS: QuizQuestion[] = [
 
 function CompatibilityPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [currentIndex, setCurrentIndex] = React.useState(0)
   const [selections, setSelections] = React.useState<Record<number, string>>({})
   const [subSelections, setSubSelections] = React.useState<
@@ -187,10 +190,25 @@ function CompatibilityPage() {
     setSubSelections((prev) => ({ ...prev, [currentIndex]: subId }))
   }
 
-  function handleNext() {
+  async function handleNext() {
     if (!isStepComplete) return
 
     if (isLastStep) {
+      if (!user) {
+        toast.error("Please sign in first", { description: "Your compatibility answers are saved to your Supabase account." })
+        navigate("/sign-in")
+        return
+      }
+      if (!isSupabaseConfigured) {
+        toast.error("Supabase is not configured", { description: "Add the environment variables in .env.local before saving answers." })
+        return
+      }
+      const responses = QUESTIONS.map((item, index) => ({ category: item.category, answer: selections[index], subAnswer: subSelections[index] || null }))
+      const { error } = await getSupabase().from("compatibility_responses").insert({ user_id: user.id, responses })
+      if (error) {
+        toast.error("Could not save your answers", { description: error.message })
+        return
+      }
       toast.success("Compatibility test completed!", {
         description:
           "Your preferences have been saved. Directing to home page...",

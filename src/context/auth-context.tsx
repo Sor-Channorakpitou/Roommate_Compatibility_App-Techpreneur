@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+﻿/* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js"
 import { isSupabaseConfigured, supabase } from "@/lib/supabase"
